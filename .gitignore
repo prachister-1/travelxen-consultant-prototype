@@ -1,0 +1,7 @@
+.claude/settings.local.json
+.claude/*.local.md
+.arness/*.local.yaml
+node_modules
+dist
+*.local
+.DS_Store
