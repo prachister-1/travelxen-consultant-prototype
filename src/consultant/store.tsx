@@ -1,5 +1,5 @@
 import { createContext, useContext, useMemo, useReducer, type ReactNode } from 'react'
-import { createSnapshot, ESCALATE_REASONS } from './data'
+import { createSnapshot, ESCALATE_REASONS, OVERRIDE_REASONS } from './data'
 import type { DecisionAction, DemoSnapshot, ServiceCase, Toast } from './types'
 
 let toastSeq = 1
@@ -13,6 +13,7 @@ type Action =
   | { type: 'select-option'; caseId: string; optionId: string }
   | { type: 'set-note'; caseId: string; note: string }
   | { type: 'set-escalate-reason'; caseId: string; reason: string }
+  | { type: 'set-override-reason'; caseId: string; reason: string }
   | { type: 'decide'; caseId: string; decision: DecisionAction }
   | { type: 'verify-booking'; caseId: string }
   | { type: 'verify-message'; caseId: string }
@@ -173,11 +174,13 @@ function reducer(state: DemoSnapshot, action: Action): DemoSnapshot {
       return patchCase(state, action.caseId, { decisionNote: action.note })
     case 'set-escalate-reason':
       return patchCase(state, action.caseId, { escalateReason: action.reason })
+    case 'set-override-reason':
+      return patchCase(state, action.caseId, { overrideReason: action.reason })
     case 'decide': {
       const c = state.cases.find((x) => x.id === action.caseId)
       if (!c) return state
       if (action.decision !== 'escalate' && !c.selectedOptionId) {
-        return addToast(state, 'Select a rebooking option before approving or modifying')
+        return addToast(state, 'Select a rebooking option before approving or overriding')
       }
       if (action.decision !== 'escalate' && c.workflow === 'triage' && !c.inventoryFresh) {
         return addToast(state, 'Inventory is stale — refresh before ticketing')
@@ -185,13 +188,21 @@ function reducer(state: DemoSnapshot, action: Action): DemoSnapshot {
       if (action.decision === 'escalate' && !c.escalateReason) {
         return addToast(state, 'Choose an escalation reason')
       }
+      if (action.decision === 'override' && !c.overrideReason) {
+        return addToast(state, 'Choose why you are overriding Ava')
+      }
       const option = c.options.find((o) => o.id === c.selectedOptionId)
+      if (action.decision === 'override' && option?.recommended) {
+        return addToast(state, 'Pick a different flight than Ava’s recommendation to override')
+      }
       const label =
         action.decision === 'approve'
           ? `Approved ${option?.flight ?? 'option'} — awaiting verification`
           : action.decision === 'modify'
             ? `Modified recommendation — ${option?.flight ?? 'option'} selected`
-            : `Escalated: ${c.escalateReason}`
+            : action.decision === 'override'
+              ? `Overrode Ava — ${option?.flight ?? 'option'} · ${c.overrideReason}`
+              : `Escalated: ${c.escalateReason}`
       let next = patchCase(state, action.caseId, {
         decision: action.decision,
         stage: action.decision === 'escalate' ? 'escalated' : action.decision === 'approve' ? 'approved' : 'modified',
@@ -202,7 +213,7 @@ function reducer(state: DemoSnapshot, action: Action): DemoSnapshot {
             time: nowTime(),
             actor: 'Alex Morgan',
             label: label,
-            detail: c.decisionNote || 'Consultant decision recorded (demo)',
+            detail: c.decisionNote || c.overrideReason || 'Consultant decision recorded (demo)',
           },
         ],
       })
@@ -276,9 +287,11 @@ function reducer(state: DemoSnapshot, action: Action): DemoSnapshot {
           outcome: option ? `${option.flight} · ${option.arrive}` : 'Rebooked',
           consultantAction: c.resolvedByAva
             ? 'Attested meeting fit, handed EI 60 back to Ava'
-            : c.decision === 'modify'
-              ? 'Modified recommendation'
-              : 'Approved recommended option',
+            : c.decision === 'override'
+              ? `Overrode Ava · ${c.overrideReason}`
+              : c.decision === 'modify'
+                ? 'Modified recommendation'
+                : 'Approved recommended option',
           whatWorked: c.resolvedByAva
             ? 'In-policy €0 same-day option was safe to automate after a one-click attest.'
             : 'Meeting constraint + fare-family protection produced a same-day ticket without overnight.',
@@ -439,6 +452,6 @@ export function useDemo() {
   return v
 }
 
-export { ESCALATE_REASONS, avaBlockedReason }
+export { ESCALATE_REASONS, OVERRIDE_REASONS, avaBlockedReason }
 
 export type { Toast }

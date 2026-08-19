@@ -21,7 +21,7 @@ export type CaseStage =
   | 'verified'
   | 'learned'
 
-export type DecisionAction = 'approve' | 'modify' | 'escalate'
+export type DecisionAction = 'approve' | 'modify' | 'override' | 'escalate'
 export type AgentWorkflow = 'rebook' | 'triage' | 'ava_contained' | 'servicing' | 'specialist'
 
 export interface SourceLabel {
@@ -112,6 +112,7 @@ export interface ServiceCase {
   decision: DecisionAction | null
   decisionNote: string
   escalateReason: string
+  overrideReason: string
   verifiedBooking: boolean
   verifiedMessage: boolean
   pnr: string

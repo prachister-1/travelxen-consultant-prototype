@@ -113,10 +113,10 @@ export function ConsultantShell() {
               <div className="card absolute right-0 mt-2 w-[360px] p-4 text-sm" role="dialog" aria-label="Demo help">
                 <div className="font-medium">Presenter path</div>
                 <ol className="mt-2 list-decimal space-y-1 pl-4 text-muted">
-                  <li>Inbox — Supervisor routes Ava, consultant, or specialist.</li>
-                  <li>Agents — helper agents pre-work the trip; knowledge returns to Ava.</li>
-                  <li>Trip — attest or hand back to Ava. Sofia stays specialist.</li>
-                  <li>Quality — capture the playbook so Ava contains the next one.</li>
+                  <li>Inbox — Maya Patel, WhatsApp, Ava escalated.</li>
+                  <li>Open trip — Disruption Case Brief, then EI 60.</li>
+                  <li>Ticket, confirm ticketed, send WhatsApp — or Override Ava with a reason.</li>
+                  <li>Capture learning. Hand EI 60 back to Ava so the next miss-connect is contained.</li>
                 </ol>
               </div>
             ) : null}

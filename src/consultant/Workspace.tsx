@@ -1,7 +1,7 @@
 import { useNavigate } from 'react-router-dom'
 import { AlertTriangle, Bot, Check, FileText, Lock, RefreshCw, Send, Sparkles, Star } from 'lucide-react'
-import { avaBlockedReason, ESCALATE_REASONS, useDemo } from './store'
-import { ChannelLabel, PriorityChip } from './ui'
+import { avaBlockedReason, ESCALATE_REASONS, OVERRIDE_REASONS, useDemo } from './store'
+import { ChannelLabel, PriorityChip, SourceTag } from './ui'
 import { DeskCopilot } from './DeskCopilot'
 import type { AgentWorkflow, FlightSegment, RebookOption, ServiceCase } from './types'
 
@@ -58,6 +58,7 @@ export function ConsultantWorkspace() {
       <div className="grid min-h-0 flex-1 xl:grid-cols-[minmax(0,1fr)_340px]">
         <div className="min-w-0 overflow-y-auto p-4 md:p-5">
           <PolicyAlerts c={active} />
+          <CaseBrief c={active} />
           <ItineraryCanvas c={active} />
           <WorkflowPanel c={active} />
         </div>
@@ -108,6 +109,47 @@ function TravelerBar({ c, cases }: { c: ServiceCase; cases: ServiceCase[] }) {
         <div className="text-muted">Context {c.contextCompleteness}%</div>
       </div>
     </div>
+  )
+}
+
+function CaseBrief({ c }: { c: ServiceCase }) {
+  const rows = [
+    { label: 'Traveller', value: `${c.traveller} · ${c.role}, ${c.company}`, source: { system: 'Genesys identity', freshness: 'live' } },
+    { label: 'Intent / urgency', value: `${c.intent} · ${c.urgency}`, source: { system: 'Ava', freshness: 'handoff' } },
+    { label: 'Trip / PNR', value: `${c.originBooking} · ${c.pnr}`, source: { system: 'TravelXen', freshness: '4 min ago' } },
+    { label: 'Policy', value: c.policy, source: { system: 'TravelXen policy', freshness: '7 min ago' } },
+    { label: 'Meeting / constraint', value: c.meetingConstraint, source: { system: 'Calendar + case note', freshness: '9 min ago' } },
+    { label: 'Location now', value: c.locationNow, source: { system: 'Traveller channel', freshness: 'live' } },
+    { label: 'Ava already did', value: c.avaOutcome, source: { system: 'Ava', freshness: 'handoff' } },
+    {
+      label: 'Inventory',
+      value: c.inventoryFresh ? 'Fresh — ticketing unlocked' : 'Stale — do not ticket',
+      source: { system: 'TravelXen inventory', freshness: c.inventoryFresh ? '1 min ago' : '11 min ago' },
+    },
+  ]
+  return (
+    <section className="card mb-4 overflow-hidden">
+      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-line px-4 py-3">
+        <div>
+          <div className="text-[11px] font-medium tracking-[0.12em] text-muted uppercase">Disruption Case Brief</div>
+          <div className="text-sm font-medium">
+            {c.caseNumber} · context {c.contextCompleteness}% · confidence {c.confidence}%
+          </div>
+        </div>
+        <span className="chip bg-purple-soft text-purple">Shared case object · demo data</span>
+      </div>
+      <dl className="divide-y divide-line">
+        {rows.map((row) => (
+          <div key={row.label} className="grid gap-1 px-4 py-2.5 sm:grid-cols-[140px_minmax(0,1fr)_auto] sm:items-start">
+            <dt className="text-[12px] text-muted">{row.label}</dt>
+            <dd className="text-sm">{row.value}</dd>
+            <dd className="sm:text-right">
+              <SourceTag system={row.source.system} freshness={row.source.freshness} />
+            </dd>
+          </div>
+        ))}
+      </dl>
+    </section>
   )
 }
 
@@ -577,7 +619,7 @@ function AgentActions({ c, ticketDisabled = false }: { c: ServiceCase; ticketDis
           {ticketDisabled ? 'Ticketing locked until inventory is fresh' : 'Human-controlled · no live GDS'}
         </span>
       </div>
-      <div className="grid gap-3 md:grid-cols-2">
+      <div className="grid gap-3 md:grid-cols-3">
         <label className="block text-[12px] text-muted">
           Agent note
           <textarea
@@ -588,6 +630,22 @@ function AgentActions({ c, ticketDisabled = false }: { c: ServiceCase; ticketDis
             className="mt-1 w-full rounded-xl border border-line px-3 py-2 text-sm text-ink outline-none focus:border-purple"
             placeholder="Protect business fare. Aisle if available."
           />
+        </label>
+        <label className="block text-[12px] text-muted">
+          Override Ava
+          <select
+            value={c.overrideReason}
+            disabled={locked || awaitingVerify}
+            onChange={(e) => dispatch({ type: 'set-override-reason', caseId: c.id, reason: e.target.value })}
+            className="mt-1 w-full rounded-xl border border-line bg-white px-3 py-2 text-sm text-ink outline-none focus:border-purple"
+          >
+            <option value="">Why is the recommendation wrong?</option>
+            {OVERRIDE_REASONS.map((r) => (
+              <option key={r} value={r}>
+                {r}
+              </option>
+            ))}
+          </select>
         </label>
         <label className="block text-[12px] text-muted">
           Escalate to specialist
@@ -612,14 +670,19 @@ function AgentActions({ c, ticketDisabled = false }: { c: ServiceCase; ticketDis
         </button>
         <button
           type="button"
+          className="btn btn-ghost"
+          disabled={!canDecide}
+          onClick={() => dispatch({ type: 'decide', caseId: c.id, decision: 'override' })}
+        >
+          Override Ava
+        </button>
+        <button
+          type="button"
           className="btn btn-teal"
           disabled={locked || awaitingVerify || ticketDisabled || c.resolvedByAva}
           onClick={() => dispatch({ type: 'ava-complete', caseId: c.id })}
         >
           <Sparkles size={14} /> Hand back to Ava
-        </button>
-        <button type="button" className="btn btn-ghost" disabled={!canDecide} onClick={() => dispatch({ type: 'decide', caseId: c.id, decision: 'modify' })}>
-          Save as modified
         </button>
         <button type="button" className="btn btn-danger" disabled={locked || awaitingVerify} onClick={() => dispatch({ type: 'decide', caseId: c.id, decision: 'escalate' })}>
           Escalate

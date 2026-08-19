@@ -12,24 +12,33 @@ const intentMix = [
 ]
 
 export function QualityLearning() {
-  const { signals, avaResolvedToday, contextCompleteness, avaRuns } = useDemo()
+  const { signals, avaResolvedToday, contextCompleteness, avaRuns, cases } = useDemo()
   const latest = signals[0]
   const avaToday = avaRuns.filter((r) => r.status === 'resolved')
+  const maya = cases.find((c) => c.id === 'case-maya')
+  const mayaClosed =
+    maya &&
+    (maya.stage === 'verified' || maya.stage === 'learned' || maya.resolvedByAva || maya.verifiedBooking)
+  const humanDecided = cases.filter((c) => c.decision === 'approve' || c.decision === 'modify' || c.decision === 'override')
+  const accepted = humanDecided.filter((c) => c.decision === 'approve').length
+  const recAcceptance = humanDecided.length === 0 ? '88%' : `${Math.round((accepted / humanDecided.length) * 100)}%`
+  const verifiedResolution = mayaClosed ? '74%' : '71%'
+  const repeatContact = mayaClosed ? '0' : '6%'
 
   return (
     <div className="mx-auto max-w-[1440px]">
       <div className="mb-5">
         <h1 className="text-[28px] font-semibold tracking-tight">Quality & learning</h1>
         <p className="mt-1 max-w-3xl text-sm text-muted">
-          Every verified resolution becomes a signal: what the consultant changed, why it worked, and which playbook should absorb it.
+          Verified traveller outcomes — not chat scores. Capture Maya’s disruption rebook so Ava can take the next same-fare-family miss-connect.
         </p>
       </div>
 
       <div className="mb-5 grid grid-cols-2 gap-3 xl:grid-cols-4">
-        <MetricCard label="Ava containment (today)" value={`${avaResolvedToday}%`} hint="Includes hand-backs this session" />
-        <MetricCard label="Handoff completeness" value={`${contextCompleteness}%`} hint="Identity, intent, booking" />
-        <MetricCard label="Signals captured" value={String(signals.length)} hint="Including this session" />
-        <MetricCard label="Brief calibration" value="88%" hint="Consultant agreed with recommended option" />
+        <MetricCard label="Verified resolution" value={verifiedResolution} hint={mayaClosed ? 'Maya’s outcome captured this session' : 'Pilot baseline · demo'} />
+        <MetricCard label="Repeat contact" value={repeatContact} hint={mayaClosed ? 'No avoidable repeat after verified WhatsApp' : 'Avoidable repeats · demo'} />
+        <MetricCard label="Recommendation accepted" value={recAcceptance} hint="Approve vs override this session" />
+        <MetricCard label="Ava safe to automate" value={`${avaResolvedToday}%`} hint={`Handoff completeness ${contextCompleteness}%`} />
       </div>
 
       <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_340px]">
