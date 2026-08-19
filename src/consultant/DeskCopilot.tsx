@@ -2,10 +2,10 @@ import { Lock, Languages } from 'lucide-react'
 import type { ServiceCase } from './types'
 import { deskBrief } from './deskBrief'
 
-export function DeskCopilot({ c }: { c: ServiceCase }) {
+export function DeskCopilot({ c, embedded = false }: { c: ServiceCase; embedded?: boolean }) {
   const brief = deskBrief(c)
   return (
-    <section className="card mb-4 overflow-hidden">
+    <section className={embedded ? 'overflow-hidden' : 'card mb-4 overflow-hidden'}>
       <div className="flex flex-wrap items-start justify-between gap-2 border-b border-line px-4 py-3">
         <div>
           <div className="text-[11px] font-medium tracking-[0.12em] text-muted uppercase">Desk copilot · non-GDS</div>

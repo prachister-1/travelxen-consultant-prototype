@@ -1,9 +1,23 @@
+import { useState, type ReactNode } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { AlertTriangle, Bot, Check, FileText, Lock, RefreshCw, Send, Sparkles, Star } from 'lucide-react'
+import {
+  AlertTriangle,
+  Bot,
+  Check,
+  FileText,
+  Lock,
+  Mail,
+  MessageCircle,
+  Phone,
+  RefreshCw,
+  Send,
+  Sparkles,
+  Star,
+} from 'lucide-react'
 import { avaBlockedReason, ESCALATE_REASONS, OVERRIDE_REASONS, useDemo } from './store'
-import { ChannelLabel, PriorityChip, SourceTag } from './ui'
+import { ChannelLabel, PriorityChip } from './ui'
 import { DeskCopilot } from './DeskCopilot'
-import type { AgentWorkflow, FlightSegment, RebookOption, ServiceCase } from './types'
+import type { AgentWorkflow, Channel, FlightSegment, RebookOption, ServiceCase } from './types'
 
 const WORKFLOW_LABEL: Record<AgentWorkflow, string> = {
   rebook: 'Rebook',
@@ -13,9 +27,13 @@ const WORKFLOW_LABEL: Record<AgentWorkflow, string> = {
   specialist: 'Specialist',
 }
 
+type TripTab = 'flights' | 'hotels' | 'cars'
+type ChatTab = 'chat' | 'phone' | 'email'
+
 export function ConsultantWorkspace() {
   const { cases, selectedCaseId, dispatch, search } = useDemo()
   const navigate = useNavigate()
+  const [tripTab, setTripTab] = useState<TripTab>('flights')
   const filtered = cases.filter((c) => {
     if (!search.trim()) return true
     const q = search.toLowerCase()
@@ -30,7 +48,7 @@ export function ConsultantWorkspace() {
           <div className="text-sm font-medium text-purple">TravelXen</div>
           <h1 className="mt-1 text-2xl font-medium tracking-tight">Open a trip</h1>
           <p className="mt-2 text-sm text-muted">
-            Start from Inbox so the itinerary, policy alerts and Ava chat land in one console.
+            Profile, itinerary, policy alerts and live chat land in one agent portal — no GDS tab.
           </p>
           <div className="mt-4 flex flex-wrap justify-center gap-2">
             {filtered.map((c) => (
@@ -53,122 +71,210 @@ export function ConsultantWorkspace() {
   }
 
   return (
-    <div className="flex min-h-[calc(100vh-56px)] flex-col bg-canvas">
-      <TravelerBar c={active} cases={filtered} />
-      <div className="grid min-h-0 flex-1 xl:grid-cols-[minmax(0,1fr)_340px]">
-        <div className="min-w-0 overflow-y-auto p-4 md:p-5">
-          <PolicyAlerts c={active} />
-          <CaseBrief c={active} />
-          <ItineraryCanvas c={active} />
-          <WorkflowPanel c={active} />
+    <div className="grid min-h-[calc(100vh-56px)] bg-canvas xl:grid-cols-[268px_minmax(0,1fr)_352px]">
+      <TravelerRail c={active} cases={filtered} />
+      <div className="min-w-0 overflow-y-auto border-x border-line">
+        <LastActionStrip c={active} />
+        <TripChrome c={active} tab={tripTab} onTab={setTripTab} />
+        <div className="p-4 md:p-5">
+          {tripTab === 'flights' ? (
+            <>
+              <ItineraryCanvas c={active} />
+              <WorkflowPanel c={active} />
+            </>
+          ) : (
+            <EmptyInventory tab={tripTab} pnr={active.pnr} />
+          )}
         </div>
-        <ChatPane c={active} />
       </div>
+      <ChatPane c={active} />
     </div>
   )
 }
 
-function TravelerBar({ c, cases }: { c: ServiceCase; cases: ServiceCase[] }) {
+function TravelerRail({ c, cases }: { c: ServiceCase; cases: ServiceCase[] }) {
   const { dispatch } = useDemo()
   const initials = c.traveller
     .split(' ')
     .map((p) => p[0])
     .join('')
   return (
-    <div className="flex flex-wrap items-center gap-3 border-b border-line bg-white px-4 py-3 md:px-5">
-      <div className="grid h-10 w-10 place-items-center rounded-full bg-purple text-sm font-medium text-white">{initials}</div>
-      <div className="min-w-0 flex-1">
-        <div className="flex flex-wrap items-center gap-2">
-          <h1 className="text-lg font-medium tracking-tight">{c.traveller}</h1>
-          <PriorityChip value={c.urgency} />
+    <aside className="hidden min-h-0 overflow-y-auto bg-white xl:block">
+      <div className="border-b border-line px-4 py-3">
+        <div className="text-[10px] font-medium tracking-[0.14em] text-muted uppercase">Open trips</div>
+        <div className="mt-2 flex flex-wrap gap-1">
+          {cases.map((item) => (
+            <button
+              key={item.id}
+              type="button"
+              onClick={() => dispatch({ type: 'select-case', id: item.id })}
+              className={`rounded-full px-2.5 py-1 text-[11px] font-medium ${
+                item.id === c.id ? 'bg-ink text-white' : 'bg-canvas text-muted'
+              }`}
+            >
+              {item.traveller.split(' ')[0]}
+            </button>
+          ))}
+        </div>
+      </div>
+      <div className="px-4 py-5">
+        <div className="flex items-start gap-3">
+          <div className="grid h-12 w-12 shrink-0 place-items-center rounded-full bg-purple text-sm font-medium text-white">
+            {initials}
+          </div>
+          <div className="min-w-0">
+            <div className="flex flex-wrap items-center gap-1.5">
+              <h1 className="text-base font-medium tracking-tight">{c.traveller}</h1>
+              <PriorityChip value={c.urgency} />
+            </div>
+            <p className="mt-0.5 text-[12px] text-muted">
+              {c.role}
+              <br />
+              {c.company}
+            </p>
+          </div>
+        </div>
+        <div className="mt-3 flex flex-wrap gap-1.5">
           <span className="chip bg-ink text-white">{WORKFLOW_LABEL[c.workflow]}</span>
           <span className="chip bg-purple-soft text-purple">{c.intent}</span>
           {c.resolvedByAva ? <span className="chip bg-teal-soft text-teal">Ava resolved</span> : null}
         </div>
-        <p className="truncate text-[12px] text-muted">
-          {c.role} · {c.company} · {c.policy} · PNR {c.pnr}
+      </div>
+      <AlertBlock
+        tone="amber"
+        icon={<AlertTriangle size={13} />}
+        title="Policy / meeting"
+        body={c.meetingConstraint}
+      />
+      <AlertBlock tone="purple" icon={<Star size={13} />} title="Loyalty" body={c.loyalty} />
+      <RailSection title="Company policy">{c.policy}</RailSection>
+      <RailSection title="Payment on file">{cardOnFile(c)}</RailSection>
+      <RailSection title="Preferences">{c.preferences.join(' · ')}</RailSection>
+      <RailSection title="Location now">{c.locationNow}</RailSection>
+      <RailSection title="Last traveler action">{lastTravelerAction(c)}</RailSection>
+      <div className="border-t border-line px-4 py-4">
+        <div className="text-[10px] font-medium tracking-[0.14em] text-muted uppercase">Booking history</div>
+        <ul className="mt-2 space-y-2">
+          {bookingHistory(c).map((row) => (
+            <li key={row.title} className="rounded-xl border border-line bg-canvas px-3 py-2">
+              <div className="text-[13px] font-medium">{row.title}</div>
+              <div className="text-[11px] text-muted">{row.meta}</div>
+            </li>
+          ))}
+        </ul>
+      </div>
+      <div className="border-t border-line px-4 py-4 text-[12px] text-muted">
+        <div className="flex items-center gap-2">
+          <Phone size={12} /> {c.phone}
+        </div>
+        <div className="mt-1 flex items-center gap-2">
+          <Mail size={12} /> {c.email}
+        </div>
+        <div className="mt-3">
+          Context {c.contextCompleteness}% · {c.confidence}% confidence
+        </div>
+        <div className="mt-1">
+          PNR {c.pnr}
           {c.newPnr ? ` → ${c.newPnr}` : ''}
-        </p>
+        </div>
       </div>
-      <div className="hidden items-center gap-2 md:flex">
-        {cases.map((item) => (
-          <button
-            key={item.id}
-            type="button"
-            onClick={() => dispatch({ type: 'select-case', id: item.id })}
-            className={`rounded-full px-2.5 py-1 text-[11px] font-medium ${
-              item.id === c.id ? 'bg-ink text-white' : 'bg-canvas text-muted'
-            }`}
-          >
-            {item.traveller.split(' ')[0]}
-          </button>
-        ))}
+    </aside>
+  )
+}
+
+function AlertBlock({
+  tone,
+  icon,
+  title,
+  body,
+}: {
+  tone: 'amber' | 'purple'
+  icon: ReactNode
+  title: string
+  body: string
+}) {
+  const cls = tone === 'amber' ? 'bg-amber-soft text-amber' : 'bg-purple-soft text-purple'
+  return (
+    <div className={`mx-4 mb-3 rounded-xl px-3 py-2.5 ${cls}`}>
+      <div className="flex items-center gap-1.5 text-[10px] font-medium tracking-[0.12em] uppercase">
+        {icon}
+        {title}
       </div>
-      <div className="text-right text-[12px]">
-        <div className="font-medium">{c.confidence}% confidence</div>
-        <div className="text-muted">Context {c.contextCompleteness}%</div>
-      </div>
+      <p className="mt-1 text-[12px] text-ink">{body}</p>
     </div>
   )
 }
 
-function CaseBrief({ c }: { c: ServiceCase }) {
-  const rows = [
-    { label: 'Traveller', value: `${c.traveller} · ${c.role}, ${c.company}`, source: { system: 'Genesys identity', freshness: 'live' } },
-    { label: 'Intent / urgency', value: `${c.intent} · ${c.urgency}`, source: { system: 'Ava', freshness: 'handoff' } },
-    { label: 'Trip / PNR', value: `${c.originBooking} · ${c.pnr}`, source: { system: 'TravelXen', freshness: '4 min ago' } },
-    { label: 'Policy', value: c.policy, source: { system: 'TravelXen policy', freshness: '7 min ago' } },
-    { label: 'Meeting / constraint', value: c.meetingConstraint, source: { system: 'Calendar + case note', freshness: '9 min ago' } },
-    { label: 'Location now', value: c.locationNow, source: { system: 'Traveller channel', freshness: 'live' } },
-    { label: 'Ava already did', value: c.avaOutcome, source: { system: 'Ava', freshness: 'handoff' } },
-    {
-      label: 'Inventory',
-      value: c.inventoryFresh ? 'Fresh — ticketing unlocked' : 'Stale — do not ticket',
-      source: { system: 'TravelXen inventory', freshness: c.inventoryFresh ? '1 min ago' : '11 min ago' },
-    },
-  ]
+function RailSection({ title, children }: { title: string; children: ReactNode }) {
   return (
-    <section className="card mb-4 overflow-hidden">
-      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-line px-4 py-3">
-        <div>
-          <div className="text-[11px] font-medium tracking-[0.12em] text-muted uppercase">Disruption Case Brief</div>
-          <div className="text-sm font-medium">
-            {c.caseNumber} · context {c.contextCompleteness}% · confidence {c.confidence}%
+    <div className="border-t border-line px-4 py-3">
+      <div className="text-[10px] font-medium tracking-[0.14em] text-muted uppercase">{title}</div>
+      <p className="mt-1 text-[13px] leading-snug">{children}</p>
+    </div>
+  )
+}
+
+function LastActionStrip({ c }: { c: ServiceCase }) {
+  return (
+    <div className="flex flex-wrap items-center justify-between gap-2 border-b border-line bg-purple-soft/60 px-4 py-2.5 md:px-5">
+      <p className="text-[12px] text-ink">
+        <span className="font-medium">Last traveler action · </span>
+        {lastTravelerAction(c)}
+      </p>
+      <span className="chip bg-white text-purple">Same-agent routing if they return today</span>
+    </div>
+  )
+}
+
+function TripChrome({ c, tab, onTab }: { c: ServiceCase; tab: TripTab; onTab: (t: TripTab) => void }) {
+  const initials = c.traveller
+    .split(' ')
+    .map((p) => p[0])
+    .join('')
+  return (
+    <div className="border-b border-line bg-white px-4 py-3 md:px-5">
+      <div className="flex flex-wrap items-center gap-3 xl:hidden">
+        <div className="grid h-9 w-9 place-items-center rounded-full bg-purple text-xs font-medium text-white">{initials}</div>
+        <div className="min-w-0 flex-1">
+          <div className="text-sm font-medium">{c.traveller}</div>
+          <div className="truncate text-[12px] text-muted">
+            {c.company} · {c.policy} · PNR {c.pnr}
           </div>
         </div>
-        <span className="chip bg-purple-soft text-purple">Shared case object · demo data</span>
+        <PriorityChip value={c.urgency} />
       </div>
-      <dl className="divide-y divide-line">
-        {rows.map((row) => (
-          <div key={row.label} className="grid gap-1 px-4 py-2.5 sm:grid-cols-[140px_minmax(0,1fr)_auto] sm:items-start">
-            <dt className="text-[12px] text-muted">{row.label}</dt>
-            <dd className="text-sm">{row.value}</dd>
-            <dd className="sm:text-right">
-              <SourceTag system={row.source.system} freshness={row.source.freshness} />
-            </dd>
-          </div>
-        ))}
-      </dl>
-    </section>
+      <div className="flex flex-wrap items-end justify-between gap-3 xl:pt-0">
+        <div className="hidden xl:block">
+          <div className="text-[11px] font-medium tracking-[0.12em] text-muted uppercase">Trip visualization</div>
+          <div className="text-base font-medium tracking-tight">{c.trip}</div>
+        </div>
+        <div className="flex gap-1 rounded-full bg-canvas p-1">
+          {(['flights', 'hotels', 'cars'] as const).map((id) => (
+            <button
+              key={id}
+              type="button"
+              onClick={() => onTab(id)}
+              className={`rounded-full px-3 py-1.5 text-[12px] font-medium capitalize ${
+                tab === id ? 'bg-white text-ink shadow-sm' : 'text-muted'
+              }`}
+            >
+              {id}
+            </button>
+          ))}
+        </div>
+      </div>
+    </div>
   )
 }
 
-function PolicyAlerts({ c }: { c: ServiceCase }) {
+function EmptyInventory({ tab, pnr }: { tab: TripTab; pnr: string }) {
   return (
-    <div className="mb-4 flex flex-wrap gap-2">
-      <span className="chip bg-amber-soft text-amber">
-        <AlertTriangle size={11} className="mr-1" /> {c.meetingConstraint}
-      </span>
-      <span className="chip bg-purple-soft text-purple">
-        <Star size={11} className="mr-1" /> {c.loyalty}
-      </span>
-      <span className="chip bg-canvas text-ink">{c.locationNow}</span>
-      {c.preferences.slice(0, 2).map((p) => (
-        <span key={p} className="chip bg-white text-muted">
-          {p}
-        </span>
-      ))}
-    </div>
+    <section className="card p-6">
+      <div className="text-sm font-medium">No {tab} on PNR {pnr}</div>
+      <p className="mt-1 text-sm text-muted">
+        Agents change or cancel {tab} from this portal when they exist on the trip — no 15 minutes in a GDS.
+      </p>
+    </section>
   )
 }
 
@@ -179,12 +285,12 @@ function ItineraryCanvas({ c }: { c: ServiceCase }) {
     <section className="card mb-4 overflow-hidden">
       <div className="flex items-center justify-between border-b border-line px-5 py-3">
         <div>
-          <div className="text-[11px] font-medium tracking-[0.12em] text-muted uppercase">Trip</div>
-          <div className="text-sm font-medium">{c.trip}</div>
+          <div className="text-[11px] font-medium tracking-[0.12em] text-muted uppercase">Current itinerary</div>
+          <div className="text-sm font-medium">{c.originBooking}</div>
         </div>
         <div className="text-right text-[12px] text-muted">
           {c.caseNumber}
-          <div>Original PNR {c.pnr}</div>
+          <div>PNR {c.pnr}</div>
         </div>
       </div>
       <div className="px-5 py-6">
@@ -193,10 +299,10 @@ function ItineraryCanvas({ c }: { c: ServiceCase }) {
             <div key={code + i} className="flex min-w-0 flex-1 items-center">
               <div className="flex w-14 shrink-0 flex-col items-center">
                 <div
-                  className={`grid h-9 w-9 place-items-center rounded-full text-[11px] font-medium ${
+                  className={`tx-node grid h-10 w-10 place-items-center rounded-full text-[11px] font-medium ${
                     c.segments.some((s) => s.to === code && s.status === 'missed')
                       ? 'bg-critical-soft text-critical'
-                      : 'bg-purple-soft text-purple'
+                      : 'bg-purple text-white'
                   }`}
                 >
                   {code}
@@ -208,14 +314,14 @@ function ItineraryCanvas({ c }: { c: ServiceCase }) {
             </div>
           ))}
         </div>
-        <div className="mt-2 grid gap-3 md:grid-cols-2">
+        <div className="mt-5 grid gap-3 md:grid-cols-2">
           {c.segments.map((s) => (
             <SegmentCard key={s.flight} s={s} />
           ))}
         </div>
         {selected ? (
           <div className="mt-3 rounded-xl border border-dashed border-purple bg-purple-soft/50 px-4 py-3">
-            <div className="text-[11px] font-medium tracking-wide text-purple uppercase">Proposed reissue</div>
+            <div className="text-[11px] font-medium tracking-wide text-purple uppercase">Change held in portal</div>
             <div className="mt-1 text-sm font-medium">
               {selected.flight} · {selected.route} · {selected.depart}–{selected.arrive}
             </div>
@@ -268,7 +374,7 @@ function WorkflowPanel({ c }: { c: ServiceCase }) {
   return (
     <>
       <AvaCopilot c={c} />
-      <DeskCopilot c={c} />
+      <FareDrawer c={c} />
       {c.workflow === 'triage' ? (
         <TriagePanel c={c} />
       ) : c.workflow === 'ava_contained' ? (
@@ -284,6 +390,30 @@ function WorkflowPanel({ c }: { c: ServiceCase }) {
         </>
       )}
     </>
+  )
+}
+
+function FareDrawer({ c }: { c: ServiceCase }) {
+  const [open, setOpen] = useState(false)
+  return (
+    <section className="card mb-4 overflow-hidden">
+      <button
+        type="button"
+        className="flex w-full items-center justify-between px-4 py-3 text-left"
+        onClick={() => setOpen((v) => !v)}
+      >
+        <div>
+          <div className="text-[11px] font-medium tracking-[0.12em] text-muted uppercase">Fare rules in the portal</div>
+          <div className="text-sm font-medium">Plain language · Ava executes ticketing</div>
+        </div>
+        <span className="text-[12px] text-purple">{open ? 'Hide' : 'Show'}</span>
+      </button>
+      {open ? (
+        <div className="border-t border-line">
+          <DeskCopilot c={c} embedded />
+        </div>
+      ) : null}
+    </section>
   )
 }
 
@@ -303,7 +433,7 @@ function AvaCopilot({ c }: { c: ServiceCase }) {
           : 'Hand back to Ava'
   const attest =
     c.workflow === 'rebook'
-      ? 'Maya asked for a person. Attest that EI 60 still lands before 19:30 ET, then Ava can ticket.'
+      ? 'Maya asked for a person. Attest that EI 60 still lands before 19:30 ET, then Ava can ticket from this portal.'
       : c.workflow === 'triage'
         ? c.inventoryFresh
           ? 'Inventory is fresh. UA 15 is $0 Polaris — Ava can ticket without a consultant handle.'
@@ -315,17 +445,23 @@ function AvaCopilot({ c }: { c: ServiceCase }) {
             : 'Immigration and documents stay with a specialist. Ava will not answer.'
 
   return (
-    <section className={`mb-4 rounded-[14px] border px-4 py-4 ${blocked ? 'border-critical/30 bg-critical-soft/40' : 'border-purple/25 bg-purple-soft/50'}`}>
+    <section className={`mb-4 rounded-[14px] border px-4 py-3 ${blocked ? 'border-critical/30 bg-critical-soft/40' : 'border-purple/25 bg-purple-soft/50'}`}>
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2 text-sm font-medium">
             <Bot size={16} className="text-purple" />
-            Ava copilot
-            {done ? <span className="chip bg-teal-soft text-teal">Resolved</span> : blocked ? <span className="chip bg-critical-soft text-critical">Blocked</span> : <span className="chip bg-white text-purple">Can automate</span>}
+            Ava
+            {done ? (
+              <span className="chip bg-teal-soft text-teal">Resolved</span>
+            ) : blocked ? (
+              <span className="chip bg-critical-soft text-critical">Blocked</span>
+            ) : (
+              <span className="chip bg-white text-purple">Can automate</span>
+            )}
           </div>
           <p className="mt-1 text-[13px] text-muted">{attest}</p>
           {c.avaPlan.length > 0 ? (
-            <ol className="mt-3 space-y-1.5 text-[13px]">
+            <ol className="mt-2 space-y-1 text-[13px]">
               {c.avaPlan.map((step, i) => (
                 <li key={step} className="flex gap-2">
                   <span className="mt-0.5 grid h-4 w-4 shrink-0 place-items-center rounded-full bg-white text-[10px] font-medium text-purple">
@@ -357,7 +493,7 @@ function TriagePanel({ c }: { c: ServiceCase }) {
       <section className={`mb-4 rounded-[14px] border px-4 py-3 ${c.inventoryFresh ? 'border-teal bg-teal-soft' : 'border-amber bg-amber-soft'}`}>
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
-            <div className="text-sm font-medium">{c.inventoryFresh ? 'Inventory is fresh — ticketing unlocked' : 'Do not ticket yet'}</div>
+            <div className="text-sm font-medium">{c.inventoryFresh ? 'Inventory is fresh — change unlocked' : 'Do not ticket yet'}</div>
             <p className="text-[12px] text-muted">
               {c.inventoryFresh
                 ? 'UA 15 snapshot is 1 min old. Last Polaris seat is still showing.'
@@ -524,13 +660,22 @@ function FlightShop({ c, lockedOverride = false }: { c: ServiceCase; lockedOverr
       </section>
     )
   }
+  const shopRoute = c.options[0]?.route ?? '—'
   return (
     <section className="mb-4">
-      <div className="mb-2 flex items-center justify-between">
-        <h2 className="text-sm font-medium">Change flight</h2>
-        <span className="text-[11px] text-muted">
-          {lockedOverride ? 'Locked until inventory refresh' : 'Inventory snapshot · demo data'}
-        </span>
+      <div className="mb-3 flex flex-wrap items-end justify-between gap-3">
+        <div>
+          <h2 className="text-sm font-medium">Change flight</h2>
+          <p className="text-[12px] text-muted">
+            {shopRoute} · today · Business · in-portal change, no GDS
+            {lockedOverride ? ' · locked until inventory refresh' : ''}
+          </p>
+        </div>
+        <div className="flex flex-wrap gap-1.5 text-[11px]">
+          <span className="rounded-full border border-line bg-white px-2.5 py-1">Cabin: Business</span>
+          <span className="rounded-full border border-line bg-white px-2.5 py-1">Stops: Nonstop</span>
+          <span className="rounded-full bg-purple-soft px-2.5 py-1 text-purple">Sort: Recommended</span>
+        </div>
       </div>
       <div className="space-y-2">
         {c.options.map((opt) => (
@@ -559,44 +704,53 @@ function FlightResult({
   onSelect: () => void
 }) {
   const [from, to] = option.route.split(' → ')
+  const code = airlineCode(option.airline)
   return (
     <button
       type="button"
       disabled={disabled}
       onClick={onSelect}
-      className={`card flex w-full flex-wrap items-center gap-4 px-4 py-3 text-left ${
+      className={`card flex w-full flex-wrap items-center gap-4 px-4 py-4 text-left ${
         selected ? 'ring-2 ring-purple' : 'hover:border-purple/40'
       }`}
     >
-      <div className="w-[120px] shrink-0">
-        <div className="text-sm font-medium">{option.airline}</div>
-        <div className="text-[12px] text-muted">{option.flight}</div>
-        {option.recommended ? (
-          <span className="mt-1 inline-flex chip bg-teal-soft text-teal">
-            <Sparkles size={10} className="mr-1" /> In policy
-          </span>
-        ) : (
-          <span className="mt-1 chip bg-canvas text-muted">{option.cabin}</span>
-        )}
-      </div>
-      <div className="flex min-w-[220px] flex-1 items-center gap-3">
+      <div className="flex w-[132px] shrink-0 items-start gap-2.5">
+        <div className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-ink text-[11px] font-medium text-white">{code}</div>
         <div>
-          <div className="text-lg font-medium tabular-nums">{option.depart}</div>
+          <div className="text-sm font-medium">{option.airline}</div>
+          <div className="text-[12px] text-muted">{option.flight}</div>
+          {option.recommended ? (
+            <span className="mt-1 inline-flex chip bg-teal-soft text-teal">
+              <Sparkles size={10} className="mr-1" /> In policy
+            </span>
+          ) : (
+            <span className="mt-1 chip bg-canvas text-muted">{option.cabin}</span>
+          )}
+        </div>
+      </div>
+      <div className="flex min-w-[240px] flex-1 items-center gap-3">
+        <div>
+          <div className="text-2xl font-medium tabular-nums tracking-tight">{option.depart}</div>
           <div className="text-[12px] text-muted">{from}</div>
         </div>
-        <div className="min-w-[72px] flex-1 text-center">
+        <div className="min-w-[80px] flex-1 text-center">
           <div className="text-[11px] text-muted">{option.duration}</div>
           <div className="route-line my-1" />
           <div className="text-[11px] text-muted">nonstop</div>
         </div>
         <div className="text-right">
-          <div className="text-lg font-medium tabular-nums">{option.arrive}</div>
+          <div className="text-2xl font-medium tabular-nums tracking-tight">{option.arrive}</div>
           <div className="text-[12px] text-muted">{to}</div>
         </div>
       </div>
-      <div className="ml-auto w-[110px] text-right">
-        <div className="text-lg font-medium">{option.travellerCost}</div>
-        <div className="text-[11px] text-muted">{option.seats} seats · {option.confidence}%</div>
+      <div className="ml-auto w-[120px] text-right">
+        <div className="text-xl font-medium text-purple">{option.travellerCost}</div>
+        <div className="text-[11px] text-muted">
+          {option.seats} seats · {option.confidence}%
+        </div>
+        <div className={`mt-2 inline-flex rounded-full px-2.5 py-1 text-[11px] font-medium ${selected ? 'bg-purple text-white' : 'bg-canvas text-ink'}`}>
+          {selected ? 'Selected' : 'Select'}
+        </div>
       </div>
     </button>
   )
@@ -614,9 +768,9 @@ function AgentActions({ c, ticketDisabled = false }: { c: ServiceCase; ticketDis
   return (
     <section className="card p-4">
       <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-        <h2 className="text-sm font-medium">Ticket and notify</h2>
+        <h2 className="text-sm font-medium">Issue change in portal</h2>
         <span className="text-[11px] text-muted">
-          {ticketDisabled ? 'Ticketing locked until inventory is fresh' : 'Human-controlled · no live GDS'}
+          {ticketDisabled ? 'Locked until inventory is fresh' : 'No GDS · traveler sees the update in their profile'}
         </span>
       </div>
       <div className="grid gap-3 md:grid-cols-3">
@@ -666,7 +820,7 @@ function AgentActions({ c, ticketDisabled = false }: { c: ServiceCase; ticketDis
       </div>
       <div className="mt-3 flex flex-wrap gap-2">
         <button type="button" className="btn btn-primary" disabled={!canDecide} onClick={() => dispatch({ type: 'decide', caseId: c.id, decision: 'approve' })}>
-          Ticket selected flight
+          Change in portal
         </button>
         <button
           type="button"
@@ -713,83 +867,195 @@ function AgentActions({ c, ticketDisabled = false }: { c: ServiceCase; ticketDis
 
 function ChatPane({ c }: { c: ServiceCase }) {
   const { dispatch } = useDemo()
+  const [tab, setTab] = useState<ChatTab>(c.channel === 'phone' ? 'phone' : c.channel === 'email' ? 'email' : 'chat')
   return (
-    <aside className="flex min-h-[480px] flex-col border-l border-line bg-white">
-      <div className="border-b border-line px-4 py-3">
+    <aside className="flex min-h-[480px] flex-col bg-white">
+      <div className="border-b border-line px-4 pt-3">
         <div className="text-[11px] font-medium tracking-[0.12em] text-muted uppercase">
           <ChannelLabel channel={c.channel} /> · live
         </div>
         <div className="text-sm font-medium">{c.traveller}</div>
         <p className="text-[12px] text-muted">{c.avaOutcome}</p>
-      </div>
-      <div className="flex-1 space-y-3 overflow-y-auto bg-surface p-4">
-        {c.transcript.map((line) => {
-        const fromTraveller = line.from === c.traveller.split(' ')[0] || line.from === c.traveller
-        return (
-            <div key={line.time + line.from + line.text.slice(0, 12)} className={`flex ${fromTraveller ? 'justify-end' : 'justify-start'}`}>
-              <div
-                className={`max-w-[85%] rounded-2xl px-3 py-2 text-sm ${
-                  fromTraveller ? 'rounded-br-md bg-purple text-white' : 'rounded-bl-md bg-white text-ink shadow-sm'
-                }`}
-              >
-                <div className={`text-[10px] font-medium ${fromTraveller ? 'text-white/70' : 'text-muted'}`}>
-                  {line.from} · {line.time}
-                </div>
-                {line.text}
-              </div>
-            </div>
-          )
-        })}
-        {c.verifiedMessage ? (
-          <div className="flex justify-start">
-            <div className="max-w-[85%] rounded-2xl rounded-bl-md bg-white px-3 py-2 text-sm shadow-sm">
-              <div className="text-[10px] font-medium text-muted">{c.resolvedByAva ? 'Ava' : 'Alex'} · sent</div>
-              {c.messagePreview.body}
-            </div>
-          </div>
-        ) : null}
-      </div>
-      <div className="border-t border-line p-3">
-        <p className="mb-2 text-[11px] text-muted">
-          {c.workflow === 'ava_contained'
-            ? c.verifiedMessage
-              ? 'Ava already messaged the traveller.'
-              : 'Do not message — Ava owns this chat.'
-            : c.workflow === 'servicing'
-              ? c.verifiedMessage
-                ? 'Invoice already sent from the servicing panel.'
-                : 'Send the invoice from the servicing panel — not as a free-text chat.'
-              : c.workflow === 'specialist'
-                ? c.stage === 'escalated'
-                  ? 'Specialist queued. Send a holding message only.'
-                  : 'Do not confirm documents. Escalate first.'
-                : c.verifiedBooking
-                  ? 'Ticketing verified. Send the traveller update.'
-                  : 'Message is locked until the ticket is confirmed.'}
-        </p>
-        <div className="flex gap-2">
-          <input
-            readOnly
-            value={c.messagePreview.body}
-            className="min-w-0 flex-1 rounded-full border border-line bg-canvas px-3 py-2 text-[12px] outline-none"
-            aria-label="Message preview"
-          />
-          <button
-            type="button"
-            className="btn btn-primary px-3"
-            disabled={
-              c.verifiedMessage ||
-              c.workflow === 'ava_contained' ||
-              c.workflow === 'servicing' ||
-              (c.workflow === 'specialist' ? c.stage !== 'escalated' : !c.verifiedBooking)
-            }
-            onClick={() => dispatch({ type: 'verify-message', caseId: c.id })}
-            aria-label="Send traveller update"
-          >
-            <Send size={14} />
-          </button>
+        <div className="mt-3 flex gap-4 text-[12px] font-medium">
+          {(
+            [
+              ['chat', MessageCircle, 'Chat'],
+              ['phone', Phone, 'Phone'],
+              ['email', Mail, 'Email'],
+            ] as const
+          ).map(([id, Icon, label]) => (
+            <button
+              key={id}
+              type="button"
+              onClick={() => setTab(id)}
+              className={`flex items-center gap-1.5 border-b-2 pb-2 ${
+                tab === id ? 'border-purple text-ink' : 'border-transparent text-muted'
+              }`}
+            >
+              <Icon size={13} /> {label}
+            </button>
+          ))}
         </div>
       </div>
+      {tab === 'phone' ? (
+        <PhoneIdle c={c} />
+      ) : tab === 'email' ? (
+        <EmailThread c={c} />
+      ) : (
+        <>
+          <div className="flex-1 space-y-3 overflow-y-auto bg-surface p-4">
+            {c.transcript.map((line) => {
+              const fromTraveller = line.from === c.traveller.split(' ')[0] || line.from === c.traveller
+              return (
+                <div key={line.time + line.from + line.text.slice(0, 12)} className={`flex ${fromTraveller ? 'justify-end' : 'justify-start'}`}>
+                  <div
+                    className={`max-w-[85%] rounded-2xl px-3 py-2 text-sm ${
+                      fromTraveller ? 'rounded-br-md bg-purple text-white' : 'rounded-bl-md bg-white text-ink shadow-sm'
+                    }`}
+                  >
+                    <div className={`text-[10px] font-medium ${fromTraveller ? 'text-white/70' : 'text-muted'}`}>
+                      {line.from} · {line.time}
+                    </div>
+                    {line.text}
+                  </div>
+                </div>
+              )
+            })}
+            {c.verifiedMessage ? (
+              <div className="flex justify-start">
+                <div className="max-w-[85%] rounded-2xl rounded-bl-md bg-white px-3 py-2 text-sm shadow-sm">
+                  <div className="text-[10px] font-medium text-muted">{c.resolvedByAva ? 'Ava' : 'Alex'} · sent</div>
+                  {c.messagePreview.body}
+                </div>
+              </div>
+            ) : null}
+          </div>
+          <Composer c={c} onSend={() => dispatch({ type: 'verify-message', caseId: c.id })} />
+        </>
+      )}
     </aside>
   )
+}
+
+function PhoneIdle({ c }: { c: ServiceCase }) {
+  return (
+    <div className="flex flex-1 flex-col items-center justify-center bg-surface px-6 text-center">
+      <div className="grid h-14 w-14 place-items-center rounded-full bg-purple-soft text-purple">
+        <Phone size={22} />
+      </div>
+      <p className="mt-3 text-sm font-medium">No live call</p>
+      <p className="mt-1 text-[12px] text-muted">
+        Last contact was <ChannelLabel channel={c.channel} />. If {c.traveller.split(' ')[0]} calls back today, they route to Alex.
+      </p>
+      <button type="button" className="btn btn-ghost mt-4" disabled>
+        Start call · demo
+      </button>
+    </div>
+  )
+}
+
+function EmailThread({ c }: { c: ServiceCase }) {
+  return (
+    <div className="flex flex-1 flex-col bg-surface p-4">
+      <div className="card p-4 text-sm">
+        <div className="text-[11px] text-muted">To · {c.email}</div>
+        <div className="mt-1 font-medium">Re: {c.originBooking}</div>
+        <p className="mt-3 text-muted">{c.messagePreview.body}</p>
+      </div>
+      <p className="mt-3 text-[11px] text-muted">Send from Chat after ticketing verifies — one message, all channels.</p>
+    </div>
+  )
+}
+
+function Composer({ c, onSend }: { c: ServiceCase; onSend: () => void }) {
+  return (
+    <div className="border-t border-line p-3">
+      <p className="mb-2 text-[11px] text-muted">
+        {c.workflow === 'ava_contained'
+          ? c.verifiedMessage
+            ? 'Ava already messaged the traveller.'
+            : 'Do not message — Ava owns this chat.'
+          : c.workflow === 'servicing'
+            ? c.verifiedMessage
+              ? 'Invoice already sent from the servicing panel.'
+              : 'Send the invoice from the servicing panel — not as a free-text chat.'
+            : c.workflow === 'specialist'
+              ? c.stage === 'escalated'
+                ? 'Specialist queued. Send a holding message only.'
+                : 'Do not confirm documents. Escalate first.'
+              : c.verifiedBooking
+                ? 'Ticketing verified. Send the traveller update.'
+                : 'Message is locked until the ticket is confirmed.'}
+      </p>
+      <div className="flex gap-2">
+        <input
+          readOnly
+          value={c.messagePreview.body}
+          className="min-w-0 flex-1 rounded-full border border-line bg-canvas px-3 py-2 text-[12px] outline-none"
+          aria-label="Message preview"
+        />
+        <button
+          type="button"
+          className="btn btn-primary px-3"
+          disabled={
+            c.verifiedMessage ||
+            c.workflow === 'ava_contained' ||
+            c.workflow === 'servicing' ||
+            (c.workflow === 'specialist' ? c.stage !== 'escalated' : !c.verifiedBooking)
+          }
+          onClick={onSend}
+          aria-label="Send traveller update"
+        >
+          <Send size={14} />
+        </button>
+      </div>
+    </div>
+  )
+}
+
+function lastTravelerAction(c: ServiceCase) {
+  const channelLabel: Record<Channel, string> = {
+    whatsapp: 'WhatsApp',
+    phone: 'phone',
+    chat: 'in-app chat',
+    email: 'email',
+  }
+  if (c.workflow === 'rebook') {
+    return `Tried Ava self-serve rebook on ${channelLabel[c.channel]} after a missed connection, then asked for a person.`
+  }
+  if (c.workflow === 'triage') {
+    return `Opened ${channelLabel[c.channel]} after a cancellation. Inventory was stale, so Ava held the case.`
+  }
+  if (c.workflow === 'ava_contained') {
+    return `Started ${channelLabel[c.channel]} with Ava. Still in self-serve — do not take over.`
+  }
+  if (c.workflow === 'servicing') {
+    return `Requested a VAT invoice from ${channelLabel[c.channel]}. No itinerary change.`
+  }
+  return `Raised a document question on ${channelLabel[c.channel]}. Last booking action did not include visa checks.`
+}
+
+function cardOnFile(c: ServiceCase) {
+  return `${c.company.split(' ')[0]} virtual card · Visa ••${c.caseNumber.replace(/\D/g, '').slice(-4) || '1842'}`
+}
+
+function bookingHistory(c: ServiceCase) {
+  return [
+    { title: c.trip, meta: `PNR ${c.pnr} · Active${c.workflow === 'rebook' || c.workflow === 'triage' ? ' · disrupted' : ''}` },
+    { title: 'SFO → LHR · 12–16 Jun 2026', meta: 'Completed · same policy' },
+  ]
+}
+
+function airlineCode(airline: string) {
+  const map: Record<string, string> = {
+    'Aer Lingus': 'EI',
+    'American Airlines': 'AA',
+    'British Airways': 'BA',
+    United: 'UA',
+    'Air India': 'AI',
+    'ITA Airways': 'AZ',
+    Alitalia: 'AZ',
+    ITA: 'AZ',
+  }
+  return map[airline] ?? airline.slice(0, 2).toUpperCase()
 }

@@ -114,8 +114,8 @@ export function ConsultantShell() {
                 <div className="font-medium">Presenter path</div>
                 <ol className="mt-2 list-decimal space-y-1 pl-4 text-muted">
                   <li>Inbox — Maya Patel, WhatsApp, Ava escalated.</li>
-                  <li>Open trip — Disruption Case Brief, then EI 60.</li>
-                  <li>Ticket, confirm ticketed, send WhatsApp — or Override Ava with a reason.</li>
+                  <li>Open Trip — traveler profile, itinerary, last action, then EI 60 in Change flight.</li>
+                  <li>Change in portal (no GDS), confirm ticketed, send chat — or Override Ava with a reason.</li>
                   <li>Capture learning. Hand EI 60 back to Ava so the next miss-connect is contained.</li>
                 </ol>
               </div>
