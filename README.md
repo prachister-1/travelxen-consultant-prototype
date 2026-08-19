@@ -6,7 +6,7 @@ Clickable prototype of a Navan-style omnichannel consultant console. Genesys inb
 
 ## Live demo
 
-https://prachister-1.github.io/room-readiness-coordinator/
+https://prachister-1.github.io/travelxen-consultant-prototype/
 
 ## Run locally
 
