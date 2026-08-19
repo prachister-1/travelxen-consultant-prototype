@@ -2,6 +2,7 @@ import { useNavigate } from 'react-router-dom'
 import { AlertTriangle, Bot, Check, FileText, Lock, RefreshCw, Send, Sparkles, Star } from 'lucide-react'
 import { avaBlockedReason, ESCALATE_REASONS, useDemo } from './store'
 import { ChannelLabel, PriorityChip } from './ui'
+import { DeskCopilot } from './DeskCopilot'
 import type { AgentWorkflow, FlightSegment, RebookOption, ServiceCase } from './types'
 
 const WORKFLOW_LABEL: Record<AgentWorkflow, string> = {
@@ -225,6 +226,7 @@ function WorkflowPanel({ c }: { c: ServiceCase }) {
   return (
     <>
       <AvaCopilot c={c} />
+      <DeskCopilot c={c} />
       {c.workflow === 'triage' ? (
         <TriagePanel c={c} />
       ) : c.workflow === 'ava_contained' ? (

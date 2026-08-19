@@ -12,28 +12,50 @@ import {
 } from 'lucide-react'
 import { useDemo } from './store'
 import { ChannelLabel, MetricCard } from './ui'
+import { DeskCopilot } from './DeskCopilot'
 import type { Interaction, ServiceCase, SupervisorRoute } from './types'
 
 const HELPERS = [
   {
+    id: 'summariser',
+    name: 'PNR summariser',
+    owner: 'Ava',
+    job: 'Turns a messy PNR, chat and disruption into a few sentences. Native language, no cryptic.',
+    speeds: 'A new hire reads Maya’s miss-connect without opening a GDS mask.',
+  },
+  {
+    id: 'rules',
+    name: 'Fare-rule reader',
+    owner: 'TravelXen',
+    job: 'Reads fare family, residual, waiver and penalties so the consultant does not decode CAT rules.',
+    speeds: 'EI 60 is already tagged same-family / €0 before anyone shops.',
+  },
+  {
+    id: 'gds',
+    name: 'GDS copilot',
+    owner: 'Ava',
+    job: 'Proposes availability, price and ticket commands. Executes only after attest or Ava containment.',
+    speeds: 'Consultants who were never Sabre/Amadeus trained can still finish a reissue.',
+  },
+  {
     id: 'inventory',
     name: 'Inventory scout',
     owner: 'TravelXen',
-    job: 'Keeps the fare snapshot under 5 minutes so the consultant never tickets stale GDS.',
+    job: 'Keeps the fare snapshot under 5 minutes so nobody tickets stale availability.',
     speeds: 'Removes the 11-minute hold on Daniel before anyone promises a seat.',
   },
   {
     id: 'policy',
     name: 'Policy checker',
     owner: 'TravelXen',
-    job: 'Confirms fare family, residual cap and same-day waiver before Ava or a human tickets.',
-    speeds: 'EI 60 is already marked €0 / in policy when Maya lands on the trip.',
+    job: 'Confirms company policy and disruption cap against the proposed itinerary.',
+    speeds: 'Stops a residual that would need a supervisor exception.',
   },
   {
     id: 'calendar',
     name: 'Constraint watch',
     owner: 'TravelXen',
-    job: 'Pins the 19:30 ET meeting and connection times into the case brief.',
+    job: 'Pins meeting times into the brief so routing is judged against a calendar, not a guess.',
     speeds: 'Consultant attests one field instead of rebuilding the itinerary from chat.',
   },
   {
@@ -53,7 +75,7 @@ const HELPERS = [
 ]
 
 export function AgentOrchestration() {
-  const { interactions, cases, signals, avaRuns, avaResolvedToday, selectedInteractionId, dispatch } = useDemo()
+  const { interactions, cases, signals, avaRuns, selectedInteractionId, dispatch } = useDemo()
   const navigate = useNavigate()
   const selected = interactions.find((i) => i.id === selectedInteractionId) ?? interactions[0]
   const selectedCase = cases.find((c) => c.id === selected?.caseId)
@@ -64,7 +86,6 @@ export function AgentOrchestration() {
     human: interactions.filter((i) => i.supervisor.routeTo === 'human').length,
     specialist: interactions.filter((i) => i.supervisor.routeTo === 'specialist').length,
   }
-  const handedBack = cases.filter((c) => c.resolvedByAva).length
   const playbooks = buildPlaybooks(cases, signals)
 
   return (
@@ -72,7 +93,7 @@ export function AgentOrchestration() {
       <div className="mb-5">
         <h1 className="text-[28px] font-medium tracking-tight">Agents</h1>
         <p className="mt-1 max-w-3xl text-sm text-muted">
-          The AI Supervisor routes every contact. Helper agents do the slow work around the consultant. What the consultant attests goes back into Ava so the next similar query never reaches a human.
+          Qualified GDS agents are scarce. The Supervisor routes the contact. Ava summarises the PNR, reads fare rules and proposes commands in plain language so a consultant who was never PSS-trained can still attest — then Quality writes that handle back into Ava.
         </p>
       </div>
 
@@ -80,7 +101,7 @@ export function AgentOrchestration() {
         <MetricCard label="Supervisor → Ava" value={String(routed.ava)} hint="Contained or Ava-owned" />
         <MetricCard label="Supervisor → consultant" value={String(routed.human)} hint="Judgment / attest only" />
         <MetricCard label="Supervisor → specialist" value={String(routed.specialist)} hint="Out of travel scope" />
-        <MetricCard label="Knowledge back to Ava" value={String(handedBack + playbooks.filter((p) => p.live).length)} hint={`${avaResolvedToday}% contained today`} />
+        <MetricCard label="GDS commands typed" value="0" hint="Ava proposes · consultant attests" />
       </div>
 
       <SupervisorHub selected={selected} playing={playback.playing} step={playback.step} />
@@ -111,6 +132,7 @@ export function AgentOrchestration() {
             ))}
           </div>
           <HandoffTape interaction={selected} serviceCase={selectedCase} step={playback.step} playing={playback.playing} />
+          {selectedCase ? <DeskCopilot c={selectedCase} /> : null}
           <HelperGrid />
         </section>
 
@@ -118,8 +140,8 @@ export function AgentOrchestration() {
           <KnowledgeBackToAva playbooks={playbooks} avaRuns={avaRuns} />
           <section className="card p-4">
             <h2 className="text-sm font-semibold">Open this trip</h2>
-            <p className="mt-1 text-[13px] text-muted">
-              Helper agents already filled inventory, policy and the traveller draft. The consultant only attests or hands back.
+            <p className="mt-3 text-[12px] leading-relaxed text-ink">
+              Shortage of GDS-trained people is why Ava proposes commands. Alex attests. Quality writes the rule back so the next hire never sees cryptic.
             </p>
             <button
               type="button"
@@ -295,9 +317,9 @@ function HandoffTape({
 function HelperGrid() {
   return (
     <section className="card p-4">
-      <h2 className="text-sm font-semibold">Agents that make the consultant faster</h2>
+      <h2 className="text-sm font-semibold">Agents that replace GDS training, not the consultant</h2>
       <p className="mt-1 text-[13px] text-muted">
-        These do not replace Alex. They pre-work inventory, policy, calendar and the traveller draft so a human only attests or escalates.
+        Shortage of Sabre/Amadeus-qualified people is the hiring bottleneck. These agents summarise, read rules, check policy and propose GDS. The human only attests judgment — meeting fit, stale inventory, or specialist risk.
       </p>
       <div className="mt-3 grid gap-2 md:grid-cols-2">
         {HELPERS.map((h) => (
