@@ -1,6 +1,6 @@
 export type Channel = 'whatsapp' | 'phone' | 'chat' | 'email'
 export type Priority = 'urgent' | 'high' | 'medium' | 'low'
-export type ViewId = 'intake' | 'workspace' | 'learning'
+export type ViewId = 'intake' | 'workspace' | 'learning' | 'orchestration'
 
 export type InteractionState =
   | 'ava_escalated'

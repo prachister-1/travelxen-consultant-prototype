@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react'
 import { NavLink, Outlet, useLocation } from 'react-router-dom'
-import { Bell, CircleHelp, GraduationCap, Inbox, Plane, RotateCcw, Search } from 'lucide-react'
+import { Bell, CircleHelp, GraduationCap, Inbox, Plane, RotateCcw, Search, Workflow } from 'lucide-react'
 import { useDemo } from './store'
 
 const nav = [
   { to: '/', label: 'Inbox', icon: Inbox, end: true },
+  { to: '/orchestration', label: 'Agents', icon: Workflow },
   { to: '/workspace', label: 'Trip', icon: Plane },
   { to: '/learning', label: 'Quality', icon: GraduationCap },
 ]
@@ -112,10 +113,10 @@ export function ConsultantShell() {
               <div className="card absolute right-0 mt-2 w-[360px] p-4 text-sm" role="dialog" aria-label="Demo help">
                 <div className="font-medium">Presenter path</div>
                 <ol className="mt-2 list-decimal space-y-1 pl-4 text-muted">
-                  <li>Inbox — Maya Patel, WhatsApp, Ava escalated.</li>
-                  <li>Open trip — itinerary, policy alerts, chat.</li>
-                  <li>Select EI 60, ticket, then send WhatsApp.</li>
-                  <li>Capture the resolution on Quality.</li>
+                  <li>Inbox — Supervisor routes Ava, consultant, or specialist.</li>
+                  <li>Agents — helper agents pre-work the trip; knowledge returns to Ava.</li>
+                  <li>Trip — attest or hand back to Ava. Sofia stays specialist.</li>
+                  <li>Quality — capture the playbook so Ava contains the next one.</li>
                 </ol>
               </div>
             ) : null}
@@ -158,7 +159,7 @@ export function ConsultantShell() {
           <p className="mt-auto px-3 pt-8 pb-3 text-[11px] leading-relaxed text-white/45">All systems operational</p>
         </aside>
         <main className={`min-w-0 flex-1 ${flush ? 'p-0' : 'p-4 md:p-6'}`}>
-          <nav className={`grid grid-cols-3 gap-2 lg:hidden ${flush ? 'p-3' : 'mb-4'}`}>
+          <nav className={`grid grid-cols-4 gap-2 lg:hidden ${flush ? 'p-3' : 'mb-4'}`}>
             {nav.map((item) => (
               <NavLink
                 key={item.to}

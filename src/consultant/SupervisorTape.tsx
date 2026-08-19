@@ -1,3 +1,4 @@
+import { useNavigate } from 'react-router-dom'
 import type { Interaction, SupervisorRoute } from './types'
 
 const ROUTE_LABEL: Record<SupervisorRoute, string> = {
@@ -15,6 +16,7 @@ export function SupervisorTape({
   active: number
   playing: boolean
 }) {
+  const navigate = useNavigate()
   const d = interaction?.supervisor
   const decided = active >= 4 && d
   const scoring = active >= 3
@@ -50,6 +52,13 @@ export function SupervisorTape({
         <div className={`border-t px-4 py-3 text-[12px] leading-relaxed ${reasonTone(d.routeTo)}`}>
           <div className="text-[11px] font-medium tracking-[0.12em] uppercase opacity-70">Why this route</div>
           <p className="mt-1 text-sm text-ink">{d.reason}</p>
+          <button
+            type="button"
+            className="btn btn-ghost mt-3 w-full bg-white text-xs"
+            onClick={() => navigate('/orchestration')}
+          >
+            See how agents work together
+          </button>
         </div>
       ) : (
         <p className="border-t border-line bg-canvas px-4 py-2 text-[12px] text-muted">

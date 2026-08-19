@@ -4,6 +4,7 @@ import { ConsultantShell } from './consultant/Shell'
 import { IntakeQueue } from './consultant/IntakeQueue'
 import { ConsultantWorkspace } from './consultant/Workspace'
 import { QualityLearning } from './consultant/Learning'
+import { AgentOrchestration } from './consultant/Orchestration'
 
 export default function App() {
   return (
@@ -13,6 +14,7 @@ export default function App() {
           <Route element={<ConsultantShell />}>
             <Route path="/" element={<IntakeQueue />} />
             <Route path="/workspace" element={<ConsultantWorkspace />} />
+            <Route path="/orchestration" element={<AgentOrchestration />} />
             <Route path="/learning" element={<QualityLearning />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Route>
