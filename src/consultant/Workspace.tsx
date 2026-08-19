@@ -16,6 +16,7 @@ import {
 } from 'lucide-react'
 import { avaBlockedReason, ESCALATE_REASONS, OVERRIDE_REASONS, useDemo } from './store'
 import { ChannelLabel, PriorityChip } from './ui'
+import { AgentWorkStrip } from './AgentActivity'
 import { DeskCopilot } from './DeskCopilot'
 import type { AgentWorkflow, Channel, FlightSegment, RebookOption, ServiceCase } from './types'
 
@@ -31,7 +32,7 @@ type TripTab = 'flights' | 'hotels' | 'cars'
 type ChatTab = 'chat' | 'phone' | 'email'
 
 export function ConsultantWorkspace() {
-  const { cases, selectedCaseId, dispatch, search } = useDemo()
+  const { cases, selectedCaseId, dispatch, search, interactions } = useDemo()
   const navigate = useNavigate()
   const [tripTab, setTripTab] = useState<TripTab>('flights')
   const filtered = cases.filter((c) => {
@@ -75,6 +76,14 @@ export function ConsultantWorkspace() {
       <TravelerRail c={active} cases={filtered} />
       <div className="min-w-0 overflow-y-auto border-x border-line">
         <LastActionStrip c={active} />
+        <AgentWorkStrip
+          c={active}
+          onOpen={() => {
+            const i = interactions.find((x) => x.caseId === active.id)
+            if (i) dispatch({ type: 'select-interaction', id: i.id })
+            navigate('/orchestration')
+          }}
+        />
         <TripChrome c={active} tab={tripTab} onTab={setTripTab} />
         <div className="p-4 md:p-5">
           {tripTab === 'flights' ? (

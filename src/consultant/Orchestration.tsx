@@ -2,6 +2,8 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
   Bot,
+  ChevronLeft,
+  ChevronRight,
   FileText,
   GraduationCap,
   Headphones,
@@ -10,76 +12,65 @@ import {
   UserRound,
   Workflow,
 } from 'lucide-react'
+import { HelperBoard, NowWorking, statusClass } from './AgentActivity'
+import {
+  assignmentsFor,
+  flowPhases,
+  HELPERS,
+  helperDef,
+  liveStatus,
+  phaseIndexForHelper,
+  statusAtPhase,
+  statusLabel,
+  type FlowPhase,
+  type HelperId,
+  type HelperStatus,
+} from './agentWork'
 import { useDemo } from './store'
 import { ChannelLabel, MetricCard } from './ui'
 import { DeskCopilot } from './DeskCopilot'
 import type { Interaction, ServiceCase, SupervisorRoute } from './types'
-
-const HELPERS = [
-  {
-    id: 'summariser',
-    name: 'PNR summariser',
-    owner: 'Ava',
-    job: 'Turns a messy PNR, chat and disruption into a few sentences. Native language, no cryptic.',
-    speeds: 'A new hire reads Maya’s miss-connect without opening a GDS mask.',
-  },
-  {
-    id: 'rules',
-    name: 'Fare-rule reader',
-    owner: 'TravelXen',
-    job: 'Reads fare family, residual, waiver and penalties so the consultant does not decode CAT rules.',
-    speeds: 'EI 60 is already tagged same-family / €0 before anyone shops.',
-  },
-  {
-    id: 'gds',
-    name: 'GDS copilot',
-    owner: 'Ava',
-    job: 'Proposes availability, price and ticket commands. Executes only after attest or Ava containment.',
-    speeds: 'Consultants who were never Sabre/Amadeus trained can still finish a reissue.',
-  },
-  {
-    id: 'inventory',
-    name: 'Inventory scout',
-    owner: 'TravelXen',
-    job: 'Keeps the fare snapshot under 5 minutes so nobody tickets stale availability.',
-    speeds: 'Removes the 11-minute hold on Daniel before anyone promises a seat.',
-  },
-  {
-    id: 'policy',
-    name: 'Policy checker',
-    owner: 'TravelXen',
-    job: 'Confirms company policy and disruption cap against the proposed itinerary.',
-    speeds: 'Stops a residual that would need a supervisor exception.',
-  },
-  {
-    id: 'calendar',
-    name: 'Constraint watch',
-    owner: 'TravelXen',
-    job: 'Pins meeting times into the brief so routing is judged against a calendar, not a guess.',
-    speeds: 'Consultant attests one field instead of rebuilding the itinerary from chat.',
-  },
-  {
-    id: 'draft',
-    name: 'Message drafter',
-    owner: 'Ava',
-    job: 'Writes the traveller update, then locks send until ticketing verifies.',
-    speeds: 'Alex does not type a WhatsApp from scratch after every reissue.',
-  },
-  {
-    id: 'quality',
-    name: 'Quality loop',
-    owner: 'Quality',
-    job: 'Turns a verified handle into a playbook so Ava can take the next one.',
-    speeds: 'Today’s attest becomes tomorrow’s containment.',
-  },
-]
 
 export function AgentOrchestration() {
   const { interactions, cases, signals, avaRuns, selectedInteractionId, dispatch } = useDemo()
   const navigate = useNavigate()
   const selected = interactions.find((i) => i.id === selectedInteractionId) ?? interactions[0]
   const selectedCase = cases.find((c) => c.id === selected?.caseId)
-  const playback = useOrchPlayback(selected?.id)
+  const phases = useMemo(
+    () =>
+      selected && selectedCase
+        ? flowPhases(
+            selectedCase,
+            selected.supervisor.routeTo,
+            selected.channel,
+            selected.genesysId,
+            selected.routing,
+            selected.supervisor.reason,
+          )
+        : [],
+    [selected, selectedCase],
+  )
+  const playback = useOrchPlayback(selected?.id, Math.max(phases.length - 1, 0))
+  const [pickedHelper, setPickedHelper] = useState<HelperId | null>(null)
+
+  const current = phases[playback.step]
+  const selectedHelper = pickedHelper ?? current?.helperId ?? null
+
+  const statuses = useMemo(() => {
+    const map = {} as Record<HelperId, HelperStatus>
+    if (!selectedCase) return map
+    const work = assignmentsFor(selectedCase)
+    for (const h of HELPERS) {
+      const assignment = work.find((w) => w.helperId === h.id)
+      if (!assignment) {
+        map[h.id] = 'skipped'
+        continue
+      }
+      const idx = phaseIndexForHelper(phases, h.id)
+      map[h.id] = idx >= 0 ? statusAtPhase(assignment, idx, playback.step, playback.playing, selectedCase) : liveStatus(assignment, selectedCase)
+    }
+    return map
+  }, [selectedCase, phases, playback.step, playback.playing])
 
   const routed = {
     ava: interactions.filter((i) => i.supervisor.routeTo === 'ava').length,
@@ -88,12 +79,21 @@ export function AgentOrchestration() {
   }
   const playbooks = buildPlaybooks(cases, signals)
 
+  function selectHelper(id: HelperId) {
+    setPickedHelper(id)
+    const idx = phaseIndexForHelper(phases, id)
+    if (idx >= 0) playback.jump(idx)
+  }
+
+  const nowName = current?.helperId ? helperDef(current.helperId).name : current?.actor ?? 'Waiting'
+  const nowDoing = current?.title ?? 'Replay a contact to watch helpers work.'
+
   return (
     <div className="mx-auto max-w-[1440px]">
       <div className="mb-5">
         <h1 className="text-[28px] font-medium tracking-tight">Agents</h1>
         <p className="mt-1 max-w-3xl text-sm text-muted">
-          Qualified GDS agents are scarce. The Supervisor routes the contact. Ava summarises the PNR, reads fare rules and proposes commands in plain language so a consultant who was never PSS-trained can still attest — then Quality writes that handle back into Ava.
+          Qualified GDS agents are scarce. Replay a contact to watch each helper work — summarise, read rules, shop inventory, propose commands. The consultant only attests.
         </p>
       </div>
 
@@ -106,22 +106,35 @@ export function AgentOrchestration() {
 
       <SupervisorHub selected={selected} playing={playback.playing} step={playback.step} />
 
-      <AgentStrip route={selected?.supervisor.routeTo} step={playback.step} />
+      <AgentStrip route={selected?.supervisor.routeTo} step={playback.step} phases={phases} />
+
+      <NowWorking name={nowName} doing={nowDoing} playing={playback.playing} />
 
       <div className="mt-5 grid gap-4 xl:grid-cols-[minmax(0,1fr)_380px]">
         <section>
           <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
             <h2 className="text-sm font-semibold">How they work this contact</h2>
-            <button type="button" className="btn btn-ghost text-xs" onClick={playback.play}>
-              Replay handoff
-            </button>
+            <div className="flex flex-wrap gap-2">
+              <button type="button" className="btn btn-ghost text-xs" onClick={playback.prev} aria-label="Previous step">
+                <ChevronLeft size={14} /> Prev
+              </button>
+              <button type="button" className="btn btn-primary text-xs" onClick={playback.play}>
+                Replay helpers
+              </button>
+              <button type="button" className="btn btn-ghost text-xs" onClick={playback.next} aria-label="Next step">
+                Next <ChevronRight size={14} />
+              </button>
+            </div>
           </div>
           <div className="mb-3 flex flex-wrap gap-2">
             {interactions.map((item) => (
               <button
                 key={item.id}
                 type="button"
-                onClick={() => dispatch({ type: 'select-interaction', id: item.id })}
+                onClick={() => {
+                  setPickedHelper(null)
+                  dispatch({ type: 'select-interaction', id: item.id })
+                }}
                 className={`rounded-full px-3 py-1.5 text-[12px] font-medium ${
                   item.id === selected?.id ? 'bg-ink text-white' : 'bg-white text-muted ring-1 ring-line'
                 }`}
@@ -131,9 +144,25 @@ export function AgentOrchestration() {
               </button>
             ))}
           </div>
-          <HandoffTape interaction={selected} serviceCase={selectedCase} step={playback.step} playing={playback.playing} />
-          {selectedCase ? <DeskCopilot c={selectedCase} /> : null}
-          <HelperGrid />
+          <HandoffTape
+            interaction={selected}
+            phases={phases}
+            step={playback.step}
+            playing={playback.playing}
+            onJump={(i) => {
+              const phase = phases[i]
+              setPickedHelper(phase?.helperId ?? null)
+              playback.jump(i)
+            }}
+          />
+          {selectedCase ? (
+            <HelperBoard c={selectedCase} statuses={statuses} selectedId={selectedHelper} onSelect={selectHelper} />
+          ) : null}
+          {selectedCase ? (
+            <div className="mt-4">
+              <DeskCopilot c={selectedCase} />
+            </div>
+          ) : null}
         </section>
 
         <aside className="space-y-3">
@@ -172,8 +201,8 @@ function SupervisorHub({
   step: number
 }) {
   const d = selected?.supervisor
-  const scored = step >= 2
-  const decided = step >= 3
+  const scored = step >= 1
+  const decided = step >= 2
   return (
     <section className="mb-5 overflow-hidden rounded-[14px] border border-line bg-ink text-white">
       <div className="flex flex-wrap items-center justify-between gap-2 border-b border-white/10 px-4 py-3">
@@ -181,7 +210,7 @@ function SupervisorHub({
           <div className="text-[11px] font-medium tracking-[0.12em] text-white/50 uppercase">AI Supervisor</div>
           <div className="text-sm font-medium">Scores every inbound, then picks Ava, a consultant, or a specialist</div>
         </div>
-        {playing && step < 3 ? (
+        {playing && step < 2 ? (
           <span className="chip bg-amber-soft text-amber">Scoring…</span>
         ) : decided && d ? (
           <span className={`chip ${routeChip(d.routeTo)}`}>{routeLabel(d.routeTo)}</span>
@@ -190,7 +219,7 @@ function SupervisorHub({
         )}
       </div>
       <div className="grid gap-0 md:grid-cols-6">
-        <ScoreCell label="Intent" value={selected?.intent} show={step >= 1} />
+        <ScoreCell label="Intent" value={selected?.intent} show={step >= 0} />
         <ScoreCell label="Sentiment" value={d ? title(d.sentiment) : undefined} show={scored} />
         <ScoreCell label="Complexity" value={d ? title(d.complexity) : undefined} show={scored} />
         <ScoreCell label="VIP" value={d ? (d.vip ? 'Yes' : 'No') : undefined} show={scored} />
@@ -226,17 +255,21 @@ function ScoreCell({ label, value, show }: { label: string; value?: string; show
   )
 }
 
-function AgentStrip({ route, step }: { route?: SupervisorRoute; step: number }) {
+function AgentStrip({ route, step, phases }: { route?: SupervisorRoute; step: number; phases: FlowPhase[] }) {
+  const ownerOn = phases.findIndex((p) => p.id === 'owner')
+  const qualityOn = phases.findIndex((p) => p.helperId === 'quality')
+  const helperOn = step >= 3 && (ownerOn < 0 || step < ownerOn)
   const nodes = [
-    { id: 'genesys', name: 'Genesys', icon: Headphones, on: step >= 1 },
-    { id: 'supervisor', name: 'Supervisor', icon: Shield, on: step >= 2 },
-    { id: 'ava', name: 'Ava', icon: Bot, on: step >= 4 && route === 'ava' },
-    { id: 'consultant', name: 'Consultant', icon: UserRound, on: step >= 4 && route === 'human' },
-    { id: 'specialist', name: 'Specialist', icon: FileText, on: step >= 4 && route === 'specialist' },
-    { id: 'quality', name: 'Quality → Ava', icon: GraduationCap, on: step >= 6 },
+    { id: 'genesys', name: 'Genesys', icon: Headphones, on: step >= 0 },
+    { id: 'supervisor', name: 'Supervisor', icon: Shield, on: step >= 1 },
+    { id: 'helpers', name: 'GDS helpers', icon: Sparkles, on: helperOn },
+    { id: 'ava', name: 'Ava', icon: Bot, on: ownerOn >= 0 && step >= ownerOn && route === 'ava' },
+    { id: 'consultant', name: 'Consultant', icon: UserRound, on: ownerOn >= 0 && step >= ownerOn && route === 'human' },
+    { id: 'specialist', name: 'Specialist', icon: FileText, on: ownerOn >= 0 && step >= ownerOn && route === 'specialist' },
+    { id: 'quality', name: 'Quality → Ava', icon: GraduationCap, on: qualityOn >= 0 && step >= qualityOn },
   ]
   return (
-    <ol className="mb-1 grid grid-cols-2 gap-2 md:grid-cols-6">
+    <ol className="mb-4 grid grid-cols-2 gap-2 md:grid-cols-4 xl:grid-cols-7">
       {nodes.map((n) => {
         const Icon = n.icon
         const chosen =
@@ -245,13 +278,12 @@ function AgentStrip({ route, step }: { route?: SupervisorRoute; step: number }) 
           (n.id === 'specialist' && route === 'specialist') ||
           n.id === 'genesys' ||
           n.id === 'supervisor' ||
+          n.id === 'helpers' ||
           n.id === 'quality'
         return (
           <li
             key={n.id}
-            className={`card flex items-center gap-2 px-3 py-2 text-sm ${
-              n.on ? 'ring-2 ring-purple' : chosen ? '' : 'opacity-40'
-            }`}
+            className={`card flex items-center gap-2 px-3 py-2 text-sm ${n.on ? 'ring-2 ring-purple' : chosen ? '' : 'opacity-40'}`}
           >
             <span className={`grid h-8 w-8 place-items-center rounded-lg ${n.on ? 'bg-purple text-white' : 'bg-canvas text-muted'}`}>
               <Icon size={15} />
@@ -266,16 +298,17 @@ function AgentStrip({ route, step }: { route?: SupervisorRoute; step: number }) 
 
 function HandoffTape({
   interaction,
-  serviceCase,
+  phases,
   step,
   playing,
+  onJump,
 }: {
   interaction?: Interaction
-  serviceCase?: ServiceCase
+  phases: FlowPhase[]
   step: number
   playing: boolean
+  onJump: (index: number) => void
 }) {
-  const lines = useMemo(() => (interaction && serviceCase ? tapeFor(interaction, serviceCase) : []), [interaction, serviceCase])
   return (
     <section className="card mb-4 overflow-hidden">
       <div className="flex items-center justify-between border-b border-line px-4 py-3">
@@ -291,48 +324,33 @@ function HandoffTape({
             )}
           </div>
         </div>
-        {playing ? <span className="chip bg-amber-soft text-amber">Live</span> : <span className="chip bg-canvas text-muted">Paused</span>}
+        {playing ? <span className="chip bg-amber-soft text-amber">Live</span> : <span className="chip bg-canvas text-muted">Paused · click a step</span>}
       </div>
       <ol className="divide-y divide-line">
-        {lines.map((line, i) => {
+        {phases.map((line, i) => {
           const visible = step >= i
+          const active = step === i
+          const status: HelperStatus = !visible ? 'idle' : active && playing ? 'working' : 'done'
           return (
-            <li key={line.title} className={`px-4 py-3 ${visible ? 'opacity-100' : 'opacity-35'}`}>
-              <div className="flex items-start justify-between gap-3">
+            <li key={line.id}>
+              <button
+                type="button"
+                onClick={() => onJump(i)}
+                className={`flex w-full items-start justify-between gap-3 px-4 py-3 text-left ${
+                  active ? 'bg-purple-soft/40' : visible ? 'bg-white' : 'bg-white opacity-40'
+                }`}
+              >
                 <div>
                   <div className="text-[11px] font-medium tracking-[0.12em] text-muted uppercase">{line.actor}</div>
                   <div className="text-sm font-medium">{line.title}</div>
                   <p className="mt-0.5 text-[13px] text-muted">{visible ? line.detail : 'Waiting…'}</p>
                 </div>
-                {visible ? <span className="chip bg-teal-soft text-teal">Done</span> : <span className="chip bg-canvas text-muted">Queued</span>}
-              </div>
+                <span className={`chip shrink-0 ${statusClass(status)}`}>{active && playing ? 'Working' : statusLabel(status)}</span>
+              </button>
             </li>
           )
         })}
       </ol>
-    </section>
-  )
-}
-
-function HelperGrid() {
-  return (
-    <section className="card p-4">
-      <h2 className="text-sm font-semibold">Agents that replace GDS training, not the consultant</h2>
-      <p className="mt-1 text-[13px] text-muted">
-        Shortage of Sabre/Amadeus-qualified people is the hiring bottleneck. These agents summarise, read rules, check policy and propose GDS. The human only attests judgment — meeting fit, stale inventory, or specialist risk.
-      </p>
-      <div className="mt-3 grid gap-2 md:grid-cols-2">
-        {HELPERS.map((h) => (
-          <div key={h.id} className="rounded-xl border border-line bg-canvas px-3 py-3">
-            <div className="flex items-center justify-between gap-2">
-              <div className="text-sm font-medium">{h.name}</div>
-              <span className="chip bg-white text-muted">{h.owner}</span>
-            </div>
-            <p className="mt-1 text-[12px] text-muted">{h.job}</p>
-            <p className="mt-2 text-[12px] text-teal">{h.speeds}</p>
-          </div>
-        ))}
-      </div>
     </section>
   )
 }
@@ -385,62 +403,6 @@ function KnowledgeBackToAva({
   )
 }
 
-function tapeFor(interaction: Interaction, c: ServiceCase) {
-  const route = interaction.supervisor.routeTo
-  const handed = c.resolvedByAva
-  const lines = [
-    {
-      actor: 'Genesys',
-      title: `${labelChannel(interaction.channel)} captured`,
-      detail: `${interaction.genesysId} · ${interaction.routing}`,
-    },
-    {
-      actor: 'AI Supervisor',
-      title: 'Score intent, sentiment, complexity',
-      detail: `${title(interaction.supervisor.sentiment)} · ${interaction.supervisor.complexity} complexity · VIP ${interaction.supervisor.vip ? 'yes' : 'no'}`,
-    },
-    {
-      actor: 'AI Supervisor',
-      title: routeLabel(route),
-      detail: interaction.supervisor.reason,
-    },
-    {
-      actor: route === 'ava' ? 'Ava' : route === 'specialist' ? 'Documents specialist' : 'Helper agents',
-      title:
-        route === 'ava'
-          ? 'Ava keeps the chat'
-          : route === 'specialist'
-            ? 'Travel consultant is skipped'
-            : 'Inventory, policy and calendar pre-fill the trip',
-      detail:
-        route === 'ava'
-          ? c.avaPlan[0] ?? interaction.ava
-          : route === 'specialist'
-            ? 'Ava must not give immigration advice. Booking stays on hold.'
-            : 'Scout, policy checker and constraint watch finish before Alex opens the trip.',
-    },
-    {
-      actor: 'TravelXen',
-      title: `${c.caseNumber} is already complete enough to act`,
-      detail: `Context ${c.contextCompleteness}% · PNR ${c.pnr} · ${c.inventoryFresh ? 'inventory fresh' : 'inventory hold'}`,
-    },
-    {
-      actor: handed ? 'Ava' : route === 'human' ? 'Consultant' : 'Ava',
-      title: handed
-        ? 'Handed back — Ava finished it'
-        : route === 'human'
-          ? 'Alex attests or tickets, then Quality writes the playbook'
-          : route === 'specialist'
-            ? 'Specialist owns documents. No ticketing from travel.'
-            : 'Ava resolves without a consultant handle',
-      detail: handed
-        ? 'The attest is now a rule Ava can reuse.'
-        : 'Quality is the only path that makes Ava better. Handles that are not captured do not change routing.',
-    },
-  ]
-  return lines
-}
-
 function buildPlaybooks(cases: ServiceCase[], signals: { id: string; time: string; intent: string; playbookImpact: string; traveller: string }[]) {
   const session = signals.filter((s) => s.time.startsWith('Today'))
   const handed = cases.filter((c) => c.resolvedByAva)
@@ -487,10 +449,12 @@ function buildPlaybooks(cases: ServiceCase[], signals: { id: string; time: strin
   ]
 }
 
-function useOrchPlayback(interactionId?: string) {
-  const [step, setStep] = useState(6)
+function useOrchPlayback(interactionId?: string, maxStep = 0) {
+  const [step, setStep] = useState(maxStep)
   const [playing, setPlaying] = useState(false)
   const timers = useRef<number[]>([])
+  const maxRef = useRef(maxStep)
+  maxRef.current = maxStep
 
   function clear() {
     timers.current.forEach(clearTimeout)
@@ -501,12 +465,27 @@ function useOrchPlayback(interactionId?: string) {
     clear()
     setPlaying(true)
     setStep(0)
-    timers.current = [0, 1, 2, 3, 4, 5, 6].map((n, i) =>
+    const last = maxRef.current
+    timers.current = Array.from({ length: last + 1 }, (_, n) =>
       window.setTimeout(() => {
         setStep(n)
-        if (n === 6) setPlaying(false)
-      }, 700 * i),
+        if (n === last) setPlaying(false)
+      }, 650 * n),
     )
+  }
+
+  function jump(n: number) {
+    clear()
+    setPlaying(false)
+    setStep(Math.max(0, Math.min(maxRef.current, n)))
+  }
+
+  function next() {
+    jump(step + 1)
+  }
+
+  function prev() {
+    jump(step - 1)
   }
 
   useEffect(() => {
@@ -515,7 +494,7 @@ function useOrchPlayback(interactionId?: string) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [interactionId])
 
-  return { step, playing, play }
+  return { step, playing, play, jump, next, prev }
 }
 
 function routeLabel(route: SupervisorRoute) {
@@ -538,8 +517,4 @@ function routeChip(route: SupervisorRoute) {
 
 function title(value: string) {
   return value.charAt(0).toUpperCase() + value.slice(1)
-}
-
-function labelChannel(channel: Interaction['channel']) {
-  return { whatsapp: 'WhatsApp', phone: 'Phone', chat: 'Chat', email: 'Email' }[channel]
 }

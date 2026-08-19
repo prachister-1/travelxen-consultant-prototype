@@ -12,6 +12,7 @@ import {
 import { useDemo } from './store'
 import { ChannelLabel, Confidence, MetricCard, PriorityChip, SectionTitle, SourceTag, StateChip } from './ui'
 import { GenesysIntakeBar, useInboundPlayback } from './PipelineBar'
+import { InboxAgentStrip } from './AgentActivity'
 import { RouteChip, SupervisorTape } from './SupervisorTape'
 import type { AvaRun, Channel, Interaction, ServiceCase } from './types'
 
@@ -140,6 +141,16 @@ export function IntakeQueue() {
               navigate('/workspace')
             }}
           />
+          {playback.active >= 3 && selectedCase ? (
+            <InboxAgentStrip
+              c={selectedCase}
+              onOpen={() => {
+                if (!selected) return
+                dispatch({ type: 'select-interaction', id: selected.id })
+                navigate('/orchestration')
+              }}
+            />
+          ) : null}
 
           {playback.active >= 3 && selectedCase ? (
             <section className="card p-4">
