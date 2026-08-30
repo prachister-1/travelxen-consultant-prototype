@@ -105,6 +105,16 @@ export function assignmentsFor(c: ServiceCase): AgentAssignment[] {
       { helperId: 'draft', doing: 'Drafting the WhatsApp', result: 'Locked until the ticket verifies. No premature “you’re rebooked.”' },
       { helperId: 'quality', doing: 'Waiting to capture the attest as a playbook', result: 'If Alex hands EI 60 back, Ava contains the next miss-connect.' },
     ],
+    'case-jordan': [
+      { helperId: 'summariser', doing: 'Reading PNR JH117BA and BA 117 delay', result: 'BA 117 +2h 10m. AA 198 JFK–SFO will miss.' },
+      { helperId: 'calendar', doing: 'Pinning tomorrow’s board in SFO', result: '09:00 PT South San Francisco still holds on a same-night arrival.' },
+      { helperId: 'inventory', doing: 'Shopping JFK–SFO under the waiver', result: 'AA 177 19:25 · 3 J seats · supplier 2 min ago.' },
+      { helperId: 'rules', doing: 'Confirming issued-ticket reissue rules', result: 'Rebooking eligibility confirmed.' },
+      { helperId: 'policy', doing: 'Checking airline involuntary waiver', result: 'Waiver available · $0 · same fare family.' },
+      { helperId: 'gds', doing: 'Ava executing *A AA177 / WPA / TKP', result: 'Consultant does not type. Ticket already issued.' },
+      { helperId: 'draft', doing: 'Drafting WhatsApp', result: 'Locked until AA 177 tickets.' },
+      { helperId: 'quality', doing: 'This handle becomes an Ava playbook', result: 'Issued ticket + waiver + fresh GDS → Ava.' },
+    ],
     'case-daniel': [
       { helperId: 'summariser', doing: 'Reading cancelled UA 918 and lounge hold', result: 'Daniel is in the Club. Board dinner still tonight.' },
       { helperId: 'calendar', doing: 'Pinning board dinner', result: c.meetingConstraint },

@@ -17,6 +17,7 @@ import {
 import { avaBlockedReason, ESCALATE_REASONS, OVERRIDE_REASONS, useDemo } from './store'
 import { ChannelLabel, PriorityChip } from './ui'
 import { AgentWorkStrip } from './AgentActivity'
+import { AvaGdsFlow } from './AvaGdsFlow'
 import { DeskCopilot } from './DeskCopilot'
 import type { AgentWorkflow, Channel, FlightSegment, RebookOption, ServiceCase } from './types'
 
@@ -386,6 +387,11 @@ function WorkflowPanel({ c }: { c: ServiceCase }) {
       <FareDrawer c={c} />
       {c.workflow === 'triage' ? (
         <TriagePanel c={c} />
+      ) : c.gdsFacts && c.gdsFacts.length > 0 ? (
+        <>
+          <AvaGdsFlow c={c} />
+          <FlightShop c={c} lockedOverride={!(c.resolvedByAva || c.stage === 'verified' || c.stage === 'learned')} />
+        </>
       ) : c.workflow === 'ava_contained' ? (
         <AvaContainedPanel c={c} />
       ) : c.workflow === 'servicing' ? (
@@ -435,23 +441,27 @@ function AvaCopilot({ c }: { c: ServiceCase }) {
     ? 'Ava cannot take this'
     : c.workflow === 'servicing'
       ? 'Let Ava send invoice'
-      : c.workflow === 'ava_contained'
-        ? 'Let Ava finish'
-        : recommended
-          ? `Hand ${recommended.flight} back to Ava`
-          : 'Hand back to Ava'
-  const attest =
-    c.workflow === 'rebook'
-      ? 'Maya asked for a person. Attest that EI 60 still lands before 19:30 ET, then Ava can ticket from this portal.'
-      : c.workflow === 'triage'
-        ? c.inventoryFresh
-          ? 'Inventory is fresh. UA 15 is $0 Polaris — Ava can ticket without a consultant handle.'
-          : 'Ava is ready to ticket UA 15 the moment inventory is under 5 minutes old.'
+      : c.gdsFacts?.length
+        ? `Let Ava ticket ${recommended?.flight ?? 'the waiver flight'}`
         : c.workflow === 'ava_contained'
-          ? 'Do not take this chat. Ava already has an in-policy plan.'
-          : c.workflow === 'servicing'
-            ? 'Document-only. Ava can generate and send from the stored PNR.'
-            : 'Immigration and documents stay with a specialist. Ava will not answer.'
+          ? 'Let Ava finish'
+          : recommended
+            ? `Hand ${recommended.flight} back to Ava`
+            : 'Hand back to Ava'
+  const attest =
+    c.gdsFacts?.length
+      ? 'BA 117 delayed +2h 10m. AA 198 will be missed. Ticket issued, eligibility confirmed, waiver available, supplier updated 2 min ago. Ava tickets AA 177. Consultant does not take this.'
+      : c.workflow === 'rebook'
+        ? 'Maya asked for a person. Attest that EI 60 still lands before 19:30 ET, then Ava can ticket from this portal.'
+        : c.workflow === 'triage'
+          ? c.inventoryFresh
+            ? 'Inventory is fresh. UA 15 is $0 Polaris — Ava can ticket without a consultant handle.'
+            : 'Ava is ready to ticket UA 15 the moment inventory is under 5 minutes old.'
+          : c.workflow === 'ava_contained'
+            ? 'Do not take this chat. Ava already has an in-policy plan.'
+            : c.workflow === 'servicing'
+              ? 'Document-only. Ava can generate and send from the stored PNR.'
+              : 'Immigration and documents stay with a specialist. Ava will not answer.'
 
   return (
     <section className={`mb-4 rounded-[14px] border px-4 py-3 ${blocked ? 'border-critical/30 bg-critical-soft/40' : 'border-purple/25 bg-purple-soft/50'}`}>
@@ -677,7 +687,11 @@ function FlightShop({ c, lockedOverride = false }: { c: ServiceCase; lockedOverr
           <h2 className="text-sm font-medium">Change flight</h2>
           <p className="text-[12px] text-muted">
             {shopRoute} · today · Business · in-portal change, no GDS
-            {lockedOverride ? ' · locked until inventory refresh' : ''}
+            {lockedOverride
+              ? c.gdsFacts?.length
+                ? ' · locked — Ava tickets the waiver flight'
+                : ' · locked until inventory refresh'
+              : ''}
           </p>
         </div>
         <div className="flex flex-wrap gap-1.5 text-[11px]">
@@ -1031,6 +1045,9 @@ function lastTravelerAction(c: ServiceCase) {
   }
   if (c.workflow === 'rebook') {
     return `Tried Ava self-serve rebook on ${channelLabel[c.channel]} after a missed connection, then asked for a person.`
+  }
+  if (c.gdsFacts?.length) {
+    return `Opened ${channelLabel[c.channel]} after BA 117 delay. Ava is reading GDS: ticket issued, eligibility confirmed, waiver available.`
   }
   if (c.workflow === 'triage') {
     return `Opened ${channelLabel[c.channel]} after a cancellation. Inventory was stale, so Ava held the case.`

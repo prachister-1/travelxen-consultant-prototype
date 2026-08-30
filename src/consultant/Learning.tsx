@@ -30,7 +30,7 @@ export function QualityLearning() {
       <div className="mb-5">
         <h1 className="text-[28px] font-semibold tracking-tight">Quality & learning</h1>
         <p className="mt-1 max-w-3xl text-sm text-muted">
-          Verified traveller outcomes — not chat scores. Capture Maya’s disruption rebook so Ava can take the next same-fare-family miss-connect.
+          Verified traveller outcomes — not chat scores. Maya asked for a person. Jordan Hale is the Ava GDS path: issued ticket, confirmed eligibility, airline waiver, supplier updated 2 min ago.
         </p>
       </div>
 

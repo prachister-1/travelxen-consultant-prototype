@@ -429,6 +429,15 @@ function buildPlaybooks(cases: ServiceCase[], signals: { id: string; time: strin
       live: true,
     },
     {
+      id: 'pb-gds-waiver',
+      title: 'Issued ticket + waiver + fresh GDS → Ava',
+      rule: 'If the ticket is issued, eligibility is confirmed, an airline waiver is available, and supplier data is under 5 minutes, Ava reissues. Consultant does not type GDS.',
+      from: handed.some((c) => c.id === 'case-jordan')
+        ? 'Live from Jordan Hale BA 117 / AA 198 this session'
+        : 'Live pattern from BA 117 delay / missed AA 198',
+      live: true,
+    },
+    {
       id: 'pb-misconnect',
       title: 'Same-fare-family misconnect after attest → Ava',
       rule: 'If a consultant attests the calendar constraint, Ava may ticket the €0 recommended flight.',

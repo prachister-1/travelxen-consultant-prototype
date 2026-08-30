@@ -113,10 +113,10 @@ export function ConsultantShell() {
               <div className="card absolute right-0 mt-2 w-[360px] p-4 text-sm" role="dialog" aria-label="Demo help">
                 <div className="font-medium">Presenter path</div>
                 <ol className="mt-2 list-decimal space-y-1 pl-4 text-muted">
-                  <li>Inbox — Maya Patel, WhatsApp, Ava escalated. See which helpers already ran.</li>
-                  <li>Agents — Replay helpers. Click PNR summariser / GDS copilot to see who is working.</li>
-                  <li>Trip — profile, itinerary, Change in portal (no GDS). Confirm ticketed, send chat.</li>
-                  <li>Capture learning. Hand EI 60 back to Ava so the next miss-connect is contained.</li>
+                  <li>Inbox — Jordan Hale is Ava GDS: BA 117 delay, missed AA 198. Replay the GDS facts, then Let Ava ticket AA 177.</li>
+                  <li>Maya Patel asked for a person — attest EI 60. Sofia is specialist. Do not mix the two.</li>
+                  <li>Agents — Replay helpers. Click GDS copilot to see who is working.</li>
+                  <li>Capture learning so the next issued-ticket + waiver miss-connect stays with Ava.</li>
                 </ol>
               </div>
             ) : null}

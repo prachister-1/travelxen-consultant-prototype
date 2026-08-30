@@ -76,6 +76,32 @@ export function deskBrief(c: ServiceCase): DeskBrief {
     }
   }
   if (c.workflow === 'ava_contained') {
+    const rec = c.options.find((o) => o.recommended)
+    if (c.gdsFacts?.length) {
+      return {
+        headline: 'Ava executes the GDS reissue — consultant does not type',
+        summary: `${c.traveller}: ${c.disruption}. Ticket issued. Eligibility confirmed. Airline waiver available. Supplier updated 2 min ago.`,
+        language: 'English',
+        routing: rec ? `${rec.flight} · ${rec.route} · ${rec.depart}–${rec.arrive}` : c.originBooking,
+        fareRules: [
+          'Involuntary miss-connect on an already-issued ticket',
+          'Airline waiver covers same-fare-family reissue at $0',
+          'Supplier snapshot must stay under 5 minutes — currently 2 min',
+        ],
+        policy: c.policy,
+        consultantMustKnow: 'Do not take this chat. Do not type GDS. Let Ava ticket AA 177 under the waiver.',
+        gdsRequired: true,
+        proposed: [
+          { command: `*A ${rec?.flight ?? 'AA177'} JFKSFO 18AUG`, meaning: 'Availability on the waiver flight' },
+          { command: 'WPA', meaning: 'Price in original fare family on the issued ticket' },
+          {
+            command: 'TKP',
+            meaning: 'Reissue under airline waiver',
+            locked: !c.verifiedBooking && !c.resolvedByAva,
+          },
+        ],
+      }
+    }
     return {
       headline: 'No GDS desk work — Ava already has the plan',
       summary: c.summary,

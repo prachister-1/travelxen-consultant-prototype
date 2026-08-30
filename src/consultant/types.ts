@@ -90,6 +90,13 @@ export interface FlightSegment {
   status: 'ok' | 'delayed' | 'missed' | 'proposed'
 }
 
+export interface GdsFact {
+  id: string
+  label: string
+  value: string
+  tone: 'ok' | 'alert' | 'info'
+}
+
 export interface ServiceCase {
   id: string
   interactionId: string
@@ -135,6 +142,7 @@ export interface ServiceCase {
   transcript: { time: string; from: string; text: string }[]
   options: RebookOption[]
   messagePreview: MessagePreview
+  gdsFacts?: GdsFact[]
 }
 
 export type SupervisorRoute = 'ava' | 'human' | 'specialist'

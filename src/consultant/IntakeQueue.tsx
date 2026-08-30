@@ -301,9 +301,19 @@ function CaseCreationPanel({
             <span className="text-xs text-muted">Brief confidence</span>
             <Confidence value={serviceCase.confidence} />
           </div>
+          {serviceCase.gdsFacts?.length ? (
+            <ul className="mt-2 space-y-1 rounded-lg bg-white px-3 py-2 text-[11px]">
+              {serviceCase.gdsFacts.map((fact) => (
+                <li key={fact.id} className="flex justify-between gap-2">
+                  <span className="text-muted">{fact.label}</span>
+                  <span className="font-medium">{fact.value}</span>
+                </li>
+              ))}
+            </ul>
+          ) : null}
           <button type="button" className="btn btn-primary mt-3 w-full" onClick={onOpen}>
             <Workflow size={15} />
-            Open trip
+            {serviceCase.gdsFacts?.length ? 'Open Ava GDS flow' : 'Open trip'}
           </button>
           <p className="mt-2 text-[11px] text-muted">
             <SourceTag system="Genesys → TravelXen" freshness="auto" />

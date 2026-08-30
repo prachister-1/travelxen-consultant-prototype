@@ -46,6 +46,16 @@ function avaCompletionCopy(c: ServiceCase) {
       optionId: c.selectedOptionId,
     }
   }
+  if (c.gdsFacts?.length) {
+    const gdsOption = c.options.find((o) => o.recommended) ?? c.options.find((o) => o.id === c.selectedOptionId) ?? c.options[0]
+    return {
+      label: `Ava reissued ${gdsOption?.flight ?? 'AA 177'} on issued ticket · PNR ${c.pnr}`,
+      detail: `${gdsOption?.policyFit ?? 'Airline waiver'} · supplier 2 min · demo data`,
+      outcome: `${gdsOption?.flight ?? 'AA 177'} · ${gdsOption?.travellerCost ?? '$0'} · waiver · ${c.pnr}`,
+      newPnr: null,
+      optionId: gdsOption?.id ?? c.selectedOptionId,
+    }
+  }
   if (c.workflow === 'ava_contained' && option == null) {
     return {
       label: c.intent.toLowerCase().includes('schedule')
@@ -306,12 +316,22 @@ function reducer(state: DemoSnapshot, action: Action): DemoSnapshot {
           playbookImpact: 'Hard-stop Ava autopilot when inventory freshness > 5 min, then hand back.',
         },
         ava_contained: {
-          outcome: c.avaPlan[0] ?? 'Ava contained',
-          consultantAction: c.resolvedByAva ? 'Left with Ava' : 'Observed Ava containment',
-          whatWorked: c.resolvedByAva
-            ? 'In-policy request finished without a consultant handle.'
-            : 'Agent did not take a low-complexity chat.',
-          playbookImpact: 'Expand Ava containment for seat, schedule-change, and invoice intents.',
+          outcome: c.gdsFacts?.length
+            ? `${c.options.find((o) => o.recommended)?.flight ?? 'AA 177'} reissued on issued ticket · ${c.pnr}`
+            : (c.avaPlan[0] ?? 'Ava contained'),
+          consultantAction: c.gdsFacts?.length
+            ? 'Did not type GDS — Ava reissued under the airline waiver'
+            : c.resolvedByAva
+              ? 'Left with Ava'
+              : 'Observed Ava containment',
+          whatWorked: c.gdsFacts?.length
+            ? 'Issued ticket, confirmed eligibility, airline waiver available, supplier snapshot 2 min old. Ava ticketed without a consultant handle.'
+            : c.resolvedByAva
+              ? 'In-policy request finished without a consultant handle.'
+              : 'Agent did not take a low-complexity chat.',
+          playbookImpact: c.gdsFacts?.length
+            ? 'Issued ticket + waiver + supplier under 5 min → Ava reissues. Consultant does not open GDS.'
+            : 'Expand Ava containment for seat, schedule-change, and invoice intents.',
         },
         servicing: {
           outcome: 'VAT invoice sent',
