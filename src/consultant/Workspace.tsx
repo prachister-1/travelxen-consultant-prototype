@@ -50,17 +50,19 @@ export function ConsultantWorkspace() {
           <div className="text-sm font-medium text-purple">TravelXen</div>
           <h1 className="mt-1 text-2xl font-medium tracking-tight">Open a trip</h1>
           <p className="mt-2 text-sm text-muted">
-            Profile, itinerary, policy alerts and live chat land in one agent portal — no GDS tab.
+            Jordan Hale is the Ava GDS path. Maya Patel asked for a person. Open a trip below.
           </p>
           <div className="mt-4 flex flex-wrap justify-center gap-2">
             {filtered.map((c) => (
               <button
                 key={c.id}
                 type="button"
-                className="rounded-full border border-line bg-white px-3 py-1.5 text-xs font-medium"
+                className={`rounded-full border px-3 py-1.5 text-xs font-medium ${
+                  c.gdsFacts?.length ? 'border-purple bg-purple-soft text-purple' : 'border-line bg-white'
+                }`}
                 onClick={() => dispatch({ type: 'select-case', id: c.id })}
               >
-                {c.traveller}
+                {c.gdsFacts?.length ? `${c.traveller} · Ava GDS` : c.traveller}
               </button>
             ))}
           </div>
@@ -119,10 +121,10 @@ function TravelerRail({ c, cases }: { c: ServiceCase; cases: ServiceCase[] }) {
               type="button"
               onClick={() => dispatch({ type: 'select-case', id: item.id })}
               className={`rounded-full px-2.5 py-1 text-[11px] font-medium ${
-                item.id === c.id ? 'bg-ink text-white' : 'bg-canvas text-muted'
+                item.id === c.id ? 'bg-ink text-white' : item.gdsFacts?.length ? 'bg-purple-soft text-purple' : 'bg-canvas text-muted'
               }`}
             >
-              {item.traveller.split(' ')[0]}
+              {item.gdsFacts?.length ? `${item.traveller.split(' ')[0]} · GDS` : item.traveller.split(' ')[0]}
             </button>
           ))}
         </div>
@@ -146,6 +148,7 @@ function TravelerRail({ c, cases }: { c: ServiceCase; cases: ServiceCase[] }) {
         </div>
         <div className="mt-3 flex flex-wrap gap-1.5">
           <span className="chip bg-ink text-white">{WORKFLOW_LABEL[c.workflow]}</span>
+          {c.gdsFacts?.length ? <span className="chip bg-purple-soft text-purple">Ava GDS</span> : null}
           <span className="chip bg-purple-soft text-purple">{c.intent}</span>
           {c.resolvedByAva ? <span className="chip bg-teal-soft text-teal">Ava resolved</span> : null}
         </div>

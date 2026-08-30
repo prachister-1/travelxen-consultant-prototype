@@ -89,8 +89,8 @@ export function ConsultantShell() {
               <div className="card absolute right-0 mt-2 w-[320px] p-3" role="dialog" aria-label="Notifications">
                 <div className="text-[11px] font-medium tracking-wide text-muted uppercase">Alerts</div>
                 <ul className="mt-2 space-y-2 text-sm">
-                  <li className="rounded-lg bg-amber-soft px-3 py-2">Maya Patel — missed connection, Ava escalated.</li>
-                  <li className="rounded-lg bg-canvas px-3 py-2">EI 60 · 2 J seats · freshness 4 min.</li>
+                  <li className="rounded-lg bg-purple-soft px-3 py-2">Jordan Hale — Ava GDS. BA 117 delay, missed AA 198. Do not type GDS.</li>
+                  <li className="rounded-lg bg-amber-soft px-3 py-2">Maya Patel — missed connection, asked for a person.</li>
                   <li className="rounded-lg bg-canvas px-3 py-2">Daniel Kim holding in triage · 12 min.</li>
                 </ul>
               </div>

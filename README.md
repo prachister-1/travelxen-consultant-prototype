@@ -19,7 +19,7 @@ Opens at http://localhost:5173/
 
 ## Demo script (presenter)
 
-1. **Inbox.** Replay Genesys inbound. Watch the AI Supervisor route to Ava, a consultant, or a specialist. Ava live shows what is contained without a human.
+1. **Inbox.** Click **Ava GDS path** (Jordan Hale). Replay the six GDS facts, then **Let Ava ticket AA 177**. Do not type GDS.
 2. **Luca / Olivia / Arjun.** Open trip and **Let Ava finish** (schedule change, seat, invoice).
 3. **Daniel Kim.** Refresh inventory, then **Hand UA 15 back to Ava**.
 4. **Maya Patel.** She asked for a person. Attest the 19:30 ET meeting, then **Hand EI 60 back to Ava**.
