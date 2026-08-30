@@ -8,10 +8,12 @@ import {
   GraduationCap,
   Headphones,
   Languages,
+  Library,
   MessageSquare,
   Radar,
-  Shield,
+  Route,
   ShieldCheck,
+  Tags,
   Terminal,
   UserRound,
   Workflow,
@@ -22,6 +24,9 @@ import { useDemo } from './store'
 import type { Interaction, ServiceCase, SupervisorRoute } from './types'
 
 const ICONS: Record<HelperId, typeof Languages> = {
+  intent: Tags,
+  routing: Route,
+  knowledge: Library,
   summariser: Languages,
   calendar: CalendarClock,
   inventory: Radar,
@@ -39,13 +44,6 @@ const LEAD_AGENTS = [
     name: 'Genesys',
     job: 'Takes the traveller’s WhatsApp, phone call, chat, or email and opens the trip. You do not create the case.',
     icon: Headphones,
-  },
-  {
-    id: 'supervisor',
-    simple: 'Picks who handles it',
-    name: 'AI Supervisor',
-    job: 'Reads the request and decides: Ava can finish it, you need to confirm one thing, or it must go to a documents specialist.',
-    icon: Shield,
   },
   {
     id: 'ava',
@@ -80,7 +78,7 @@ export function AgentOrchestration() {
         <div className="text-[11px] font-medium tracking-[0.12em] text-muted uppercase">What each AI agent does</div>
         <p className="mt-1 text-[13px] text-muted">Read this list first. Then pick a trip to see them work.</p>
         <div className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
-          {LEAD_AGENTS.map((agent) => {
+          {LEAD_AGENTS.filter((agent) => agent.id === 'genesys').map((agent) => {
             const Icon = agent.icon
             return (
               <div key={agent.id} className="rounded-xl border border-line bg-canvas px-3 py-3">
@@ -113,6 +111,23 @@ export function AgentOrchestration() {
                   </div>
                 </div>
                 <p className="mt-2 text-[13px] text-ink">{h.job}</p>
+              </div>
+            )
+          })}
+          {LEAD_AGENTS.filter((agent) => agent.id === 'ava').map((agent) => {
+            const Icon = agent.icon
+            return (
+              <div key={agent.id} className="rounded-xl border border-line bg-canvas px-3 py-3">
+                <div className="flex items-center gap-2">
+                  <span className="grid h-8 w-8 place-items-center rounded-lg bg-white text-purple">
+                    <Icon size={14} />
+                  </span>
+                  <div>
+                    <div className="text-sm font-medium">{agent.simple}</div>
+                    <div className="text-[11px] text-muted">{agent.name}</div>
+                  </div>
+                </div>
+                <p className="mt-2 text-[13px] text-ink">{agent.job}</p>
               </div>
             )
           })}

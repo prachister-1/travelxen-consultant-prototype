@@ -1,6 +1,17 @@
 import type { Channel, ServiceCase, SupervisorRoute } from './types'
 
-export type HelperId = 'summariser' | 'calendar' | 'inventory' | 'rules' | 'policy' | 'gds' | 'draft' | 'quality'
+export type HelperId =
+  | 'intent'
+  | 'routing'
+  | 'knowledge'
+  | 'summariser'
+  | 'calendar'
+  | 'inventory'
+  | 'rules'
+  | 'policy'
+  | 'gds'
+  | 'draft'
+  | 'quality'
 export type HelperStatus = 'idle' | 'working' | 'done' | 'blocked' | 'skipped'
 
 export interface HelperDef {
@@ -29,6 +40,30 @@ export interface FlowPhase {
 }
 
 export const HELPERS: HelperDef[] = [
+  {
+    id: 'intent',
+    name: 'Intent classification',
+    simple: 'Names what they want',
+    owner: 'TravelXen',
+    job: 'Reads the message and names the request: missed connection, delay, seat, invoice, visa, or schedule change.',
+    speeds: 'The queue and the trip open with the right intent already filled.',
+  },
+  {
+    id: 'routing',
+    name: 'Smart routing',
+    simple: 'Picks who handles it',
+    owner: 'TravelXen',
+    job: 'Sends the trip to Ava, to you, or to a documents specialist. It uses intent, how hard it is, and how the traveller feels.',
+    speeds: 'You only see trips that need a person.',
+  },
+  {
+    id: 'knowledge',
+    name: 'Knowledge',
+    simple: 'Looks up the known rule',
+    owner: 'TravelXen',
+    job: 'Finds a matching rule from past trips: Ava can ticket, you must confirm one thing, or do not ticket yet.',
+    speeds: 'The team does not start from a blank page on a miss-connect.',
+  },
   {
     id: 'summariser',
     name: 'PNR summariser',
@@ -101,10 +136,46 @@ export function helperDef(id: HelperId) {
   return HELPER_MAP[id]
 }
 
+function routeFor(c: ServiceCase): SupervisorRoute {
+  if (c.workflow === 'specialist') return 'specialist'
+  if (c.workflow === 'rebook' || c.workflow === 'triage') return 'human'
+  return 'ava'
+}
+
+function knowledgeFor(c: ServiceCase) {
+  if (c.gdsFacts?.length) return 'Known rule: ticket issued, waiver available, seats checked under 5 minutes → Ava tickets. You do not type GDS.'
+  if (c.id === 'case-maya') return 'Known rule: traveller asked for a person → you confirm the meeting, then Ava tickets.'
+  if (c.id === 'case-daniel') return 'Known rule: seat check older than 5 minutes → do not ticket until it is refreshed.'
+  if (c.id === 'case-olivia') return 'Known rule: paid seat, in policy, no trip change → Ava finishes.'
+  if (c.id === 'case-arjun') return 'Known rule: invoice from stored PNR, no booking change → Ava sends it.'
+  if (c.id === 'case-sofia') return 'Known rule: visa or documents → never Ava. Send to a documents specialist.'
+  if (c.id === 'case-luca') return 'Known rule: carrier retimed the same ticket and the meeting still holds → Ava accepts.'
+  return 'No matching rule yet. Work this trip, then save it.'
+}
+
+function intakeAgents(c: ServiceCase): AgentAssignment[] {
+  const route = routeFor(c)
+  return [
+    { helperId: 'intent', doing: 'Reading what the traveller wants', result: c.intent },
+    {
+      helperId: 'routing',
+      doing: 'Choosing who handles this',
+      result:
+        route === 'ava'
+          ? 'Send to Ava. You do not take this chat.'
+          : route === 'specialist'
+            ? 'Send to a documents specialist. Do not advise.'
+            : 'Send to you. Confirm one thing, then Ava tickets.',
+    },
+    { helperId: 'knowledge', doing: 'Looking up a known rule', result: knowledgeFor(c) },
+  ]
+}
+
 export function assignmentsFor(c: ServiceCase): AgentAssignment[] {
   const rec = c.options.find((o) => o.recommended)
   const byCase: Partial<Record<string, AgentAssignment[]>> = {
     'case-maya': [
+      ...intakeAgents(c),
       { helperId: 'summariser', doing: 'Reading PNR M4YAPT and the WhatsApp thread', result: 'BA 832 late 94 min. Missed EI 154. Maya is airside DUB T2.' },
       { helperId: 'calendar', doing: 'Pinning the client workshop', result: 'Must land before 19:30 ET · One World Trade Center.' },
       { helperId: 'inventory', doing: 'Shopping same-day DUB–JFK in J', result: 'EI 60 16:15–18:55 · 2 seats · snapshot 4 min old.' },
@@ -115,6 +186,7 @@ export function assignmentsFor(c: ServiceCase): AgentAssignment[] {
       { helperId: 'quality', doing: 'Waiting to capture the attest as a playbook', result: 'If Alex hands EI 60 back, Ava contains the next miss-connect.' },
     ],
     'case-jordan': [
+      ...intakeAgents(c),
       { helperId: 'summariser', doing: 'Reading PNR JH117BA and BA 117 delay', result: 'BA 117 +2h 10m. AA 198 JFK–SFO will miss.' },
       { helperId: 'calendar', doing: 'Pinning tomorrow’s board in SFO', result: '09:00 PT South San Francisco still holds on a same-night arrival.' },
       { helperId: 'inventory', doing: 'Shopping JFK–SFO under the waiver', result: 'AA 177 19:25 · 3 J seats · supplier 2 min ago.' },
@@ -125,6 +197,7 @@ export function assignmentsFor(c: ServiceCase): AgentAssignment[] {
       { helperId: 'quality', doing: 'This handle becomes an Ava playbook', result: 'Issued ticket + waiver + fresh GDS → Ava.' },
     ],
     'case-daniel': [
+      ...intakeAgents(c),
       { helperId: 'summariser', doing: 'Reading cancelled UA 918 and lounge hold', result: 'Daniel is in the Club. Board dinner still tonight.' },
       { helperId: 'calendar', doing: 'Pinning board dinner', result: c.meetingConstraint },
       {
@@ -144,16 +217,18 @@ export function assignmentsFor(c: ServiceCase): AgentAssignment[] {
       { helperId: 'quality', doing: 'Hard-stop playbook already live', result: 'Stale inventory → never autopilot.' },
     ],
     'case-olivia': [
+      ...intakeAgents(c),
       { helperId: 'summariser', doing: 'Reading seat-only request', result: 'No itinerary change. Paid seat inside policy.' },
       { helperId: 'calendar', doing: 'No meeting constraint on a seat request', result: 'Nothing to pin.', skip: true },
       { helperId: 'inventory', doing: 'Seat map already in Ava', result: 'No air shop required.', skip: true },
       { helperId: 'rules', doing: 'Confirming paid-seat eligibility', result: 'In fare family. No residual.' },
-      { helperId: 'policy', doing: 'Company paid-seat policy', result: 'In policy. Supervisor keeps with Ava.' },
+      { helperId: 'policy', doing: 'Company paid-seat policy', result: 'In policy. Ava keeps this.' },
       { helperId: 'gds', doing: 'Ava will file the seat — consultant should not take this', result: 'No cryptic for Alex. Let Ava finish.' },
       { helperId: 'draft', doing: 'Ava drafting the seat confirmation', result: 'Sends when the seat files.' },
       { helperId: 'quality', doing: 'Playbook already live', result: 'Seat-only, in-policy → Ava.' },
     ],
     'case-arjun': [
+      ...intakeAgents(c),
       { helperId: 'summariser', doing: 'Reading VAT invoice request', result: 'Document only. PNR unchanged.' },
       { helperId: 'calendar', doing: 'No travel constraint', result: 'Not a disruption.', skip: true },
       { helperId: 'inventory', doing: 'No air shop', result: 'Servicing from stored PNR.', skip: true },
@@ -164,6 +239,7 @@ export function assignmentsFor(c: ServiceCase): AgentAssignment[] {
       { helperId: 'quality', doing: 'Playbook already live', result: 'VAT invoice from stored PNR → Ava.' },
     ],
     'case-sofia': [
+      ...intakeAgents(c),
       { helperId: 'summariser', doing: 'Reading ESTA / document question on AZ 610', result: 'This is immigration, not a miss-connect.' },
       { helperId: 'calendar', doing: 'Trip timing is not the risk', result: 'Do not treat as IRROPS.', skip: true },
       { helperId: 'inventory', doing: 'Not an inventory problem', result: 'Keep AZ 610 on hold. Do not shop.', skip: true },
@@ -174,6 +250,7 @@ export function assignmentsFor(c: ServiceCase): AgentAssignment[] {
       { helperId: 'quality', doing: 'Keep this out of Ava automation', result: 'Documents / visa never auto-contain.' },
     ],
     'case-luca': [
+      ...intakeAgents(c),
       { helperId: 'summariser', doing: 'Reading carrier schedule change', result: 'Same ticket. Meeting still holds.' },
       { helperId: 'calendar', doing: 'Checking the meeting still fits', result: c.meetingConstraint },
       { helperId: 'inventory', doing: 'No new shop — accept on original PNR', result: 'Carrier retimed the same flight.', skip: true },
@@ -187,6 +264,7 @@ export function assignmentsFor(c: ServiceCase): AgentAssignment[] {
 
   return (
     byCase[c.id] ?? [
+      ...intakeAgents(c),
       { helperId: 'summariser', doing: `Reading PNR ${c.pnr}`, result: c.summary },
       { helperId: 'calendar', doing: 'Reading constraints', result: c.meetingConstraint, skip: c.workflow === 'servicing' },
       { helperId: 'inventory', doing: 'Checking inventory freshness', result: c.inventoryFresh ? 'Fresh' : 'Stale', skip: c.options.length === 0 },
@@ -236,7 +314,7 @@ export function statusAtPhase(a: AgentAssignment, phaseIndex: number, currentSte
 
 export function flowPhases(c: ServiceCase, route: SupervisorRoute, channel: Channel, genesysId: string, routing: string, reason: string): FlowPhase[] {
   const work = assignmentsFor(c)
-  const before: HelperId[] = ['summariser', 'calendar', 'inventory', 'rules', 'policy', 'gds']
+  const before: HelperId[] = ['intent', 'routing', 'knowledge', 'summariser', 'calendar', 'inventory', 'rules', 'policy', 'gds']
   const after: HelperId[] = ['draft', 'quality']
   const toPhase = (a: AgentAssignment): FlowPhase => ({
     id: a.helperId,
@@ -280,18 +358,6 @@ export function flowPhases(c: ServiceCase, route: SupervisorRoute, channel: Chan
       actor: 'Genesys',
       title: `${channelLabel(channel)} captured`,
       detail: `${genesysId} · ${routing}`,
-    },
-    {
-      id: 'score',
-      actor: 'AI Supervisor',
-      title: 'Scoring intent, sentiment, complexity',
-      detail: `${c.intent} · context ${c.contextCompleteness}%`,
-    },
-    {
-      id: 'route',
-      actor: 'AI Supervisor',
-      title: route === 'ava' ? 'Keep with Ava' : route === 'specialist' ? 'Route to specialist' : 'Route to consultant',
-      detail: reason,
     },
     ...pick(before),
     owner,

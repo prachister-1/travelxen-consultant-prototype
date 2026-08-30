@@ -25,8 +25,8 @@ export function SupervisorTape({
     <section className="card overflow-hidden">
       <div className="flex items-center justify-between border-b border-line bg-ink px-4 py-3 text-white">
         <div>
-          <div className="text-[11px] font-medium tracking-[0.12em] text-white/50 uppercase">AI Supervisor</div>
-          <div className="text-sm font-medium">Decision tape · demo data</div>
+          <div className="text-[11px] font-medium tracking-[0.12em] text-white/50 uppercase">Intent + routing</div>
+          <div className="text-sm font-medium">Names the request, then picks who handles it</div>
         </div>
         {playing && active < 4 ? (
           <span className="chip bg-amber-soft text-amber">Scoring…</span>
@@ -38,14 +38,13 @@ export function SupervisorTape({
       </div>
 
       <div className="space-y-2 px-4 py-3">
-        <Field show={active >= 1} label="Intent" value={interaction?.intent} />
+        <Field show={active >= 1} label="Intent classification" value={interaction?.intent} />
         <Field show={active >= 2} label="Queue" value={interaction?.routing} />
         <Field show={scoring} label="Sentiment" value={d ? title(d.sentiment) : undefined} />
         <Field show={scoring} label="Complexity" value={d ? title(d.complexity) : undefined} />
         <Field show={scoring} label="VIP" value={d ? (d.vip ? 'Yes' : 'No') : undefined} />
         <Field show={scoring} label="Language" value={d?.language} />
-        <Field show={active >= 4} label="Supervisor confidence" value={d ? `${d.confidence}%` : undefined} />
-        <Field show={active >= 4} label="Decision" value={d ? ROUTE_LABEL[d.routeTo] : undefined} />
+        <Field show={active >= 4} label="Smart routing" value={d ? ROUTE_LABEL[d.routeTo] : undefined} />
       </div>
 
       {decided ? (
@@ -62,7 +61,7 @@ export function SupervisorTape({
         </div>
       ) : (
         <p className="border-t border-line bg-canvas px-4 py-2 text-[12px] text-muted">
-          Supervisor scores intent, sentiment and complexity, then sends the case to Ava, a consultant, or a specialist.
+          Intent classification names the request. Smart routing sends the trip to Ava, you, or a documents specialist.
         </p>
       )}
     </section>

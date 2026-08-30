@@ -3,9 +3,12 @@ import {
   CalendarClock,
   GraduationCap,
   Languages,
+  Library,
   MessageSquare,
   Radar,
+  Route,
   ShieldCheck,
+  Tags,
   Terminal,
 } from 'lucide-react'
 import {
@@ -20,6 +23,9 @@ import {
 import type { ServiceCase } from './types'
 
 const ICONS: Record<HelperId, typeof Languages> = {
+  intent: Tags,
+  routing: Route,
+  knowledge: Library,
   summariser: Languages,
   calendar: CalendarClock,
   inventory: Radar,
