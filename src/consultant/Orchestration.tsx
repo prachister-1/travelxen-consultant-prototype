@@ -168,7 +168,7 @@ export function AgentOrchestration() {
                 navigate('/workspace')
               }}
             >
-              <Workflow size={15} /> Open {selected.traveller.split(' ')[0]}’s trip
+              <Workflow size={15} /> Open trip
             </button>
           </div>
         </>
