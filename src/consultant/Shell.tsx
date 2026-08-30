@@ -115,7 +115,7 @@ export function ConsultantShell() {
                 <ol className="mt-2 list-decimal space-y-1 pl-4 text-muted">
                   <li>Inbox — Jordan Hale is Ava GDS: BA 117 delay, missed AA 198. Replay the GDS facts, then Let Ava ticket AA 177.</li>
                   <li>Maya Patel asked for a person — attest EI 60. Sofia is specialist. Do not mix the two.</li>
-                  <li>Agents — Replay helpers. Click GDS copilot to see who is working.</li>
+                  <li>Agents — pick Jordan, Maya, or Daniel. Replay helpers. Open the trip. Nothing else on that page.</li>
                   <li>Capture learning so the next issued-ticket + waiver miss-connect stays with Ava.</li>
                 </ol>
               </div>

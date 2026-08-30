@@ -20,7 +20,7 @@ Opens at http://localhost:5173/
 ## Demo script (presenter)
 
 1. **Inbox.** Click **Ava GDS path** (Jordan Hale). Replay the six GDS facts, then **Let Ava ticket AA 177**. Do not type GDS.
-2. **Luca / Olivia / Arjun.** Open trip and **Let Ava finish** (schedule change, seat, invoice).
+2. **Agents.** Pick Jordan, Maya, or Daniel. Replay helpers. Open the trip.
 3. **Daniel Kim.** Refresh inventory, then **Hand UA 15 back to Ava**.
 4. **Maya Patel.** She asked for a person. Attest the 19:30 ET meeting, then **Hand EI 60 back to Ava**.
 5. **Sofia Rossi.** Ava is blocked. Route to a documents specialist — do not give immigration advice.
