@@ -312,7 +312,7 @@ export function statusAtPhase(a: AgentAssignment, phaseIndex: number, currentSte
   return liveStatus(a, c)
 }
 
-export function flowPhases(c: ServiceCase, route: SupervisorRoute, channel: Channel, genesysId: string, routing: string, reason: string): FlowPhase[] {
+export function flowPhases(c: ServiceCase, route: SupervisorRoute, channel: Channel, genesysId: string, routing: string, _reason: string): FlowPhase[] {
   const work = assignmentsFor(c)
   const before: HelperId[] = ['intent', 'routing', 'knowledge', 'summariser', 'calendar', 'inventory', 'rules', 'policy', 'gds']
   const after: HelperId[] = ['draft', 'quality']
