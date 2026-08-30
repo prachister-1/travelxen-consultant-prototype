@@ -262,7 +262,7 @@ export function flowPhases(c: ServiceCase, route: SupervisorRoute, channel: Chan
   const pick = (ids: HelperId[]) =>
     ids
       .map((id) => work.find((w) => w.helperId === id))
-      .filter((w): w is AgentAssignment => Boolean(w) && !w.skip)
+      .filter((w): w is AgentAssignment => w != null && !w.skip)
       .map(toPhase)
 
   return [
