@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import {
   BookOpen,
   Bot,
@@ -70,7 +70,12 @@ export function AgentOrchestration() {
       <div className="mb-5">
         <h1 className="text-[28px] font-medium tracking-tight">Who is helping you</h1>
         <p className="mt-1 text-sm text-muted">
-          These AI agents do the booking work. You do not type GDS. You only step in when a traveller asks for a person, or when it is not safe to ticket.
+          AI agents work the booking. You step in only when a person is needed, or when it is not safe to ticket.
+        </p>
+        <p className="mt-2 text-sm text-ink">
+          <Link to="/context" className="font-medium text-purple underline-offset-2 hover:underline">
+            Back to this trip’s context
+          </Link>
         </p>
       </div>
 
@@ -144,7 +149,10 @@ export function AgentOrchestration() {
             <button
               key={item.id}
               type="button"
-              onClick={() => dispatch({ type: 'select-interaction', id: item.id })}
+              onClick={() => {
+                dispatch({ type: 'select-interaction', id: item.id })
+                dispatch({ type: 'select-case', id: item.caseId })
+              }}
               className={`card p-4 text-left ${on ? 'ring-2 ring-purple' : 'hover:border-purple/40'}`}
             >
               <div className="text-[11px] font-medium tracking-[0.12em] text-muted uppercase">{pathLabel(item, c)}</div>
@@ -162,7 +170,10 @@ export function AgentOrchestration() {
             <button
               key={item.id}
               type="button"
-              onClick={() => dispatch({ type: 'select-interaction', id: item.id })}
+              onClick={() => {
+                dispatch({ type: 'select-interaction', id: item.id })
+                dispatch({ type: 'select-case', id: item.caseId })
+              }}
               className={`rounded-full px-3 py-1 text-[12px] font-medium ${
                 item.id === selected?.id ? 'bg-ink text-white' : 'bg-white text-muted ring-1 ring-line'
               }`}

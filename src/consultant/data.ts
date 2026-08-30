@@ -191,7 +191,7 @@ function mayaCase(): ServiceCase {
       },
       {
         id: 'nba3',
-        label: 'Do not send a room-ready-style promise until PNR is reissued',
+        label: 'Do not confirm the new flight until the PNR is reissued',
         reason: 'Traveller is waiting in a lounge; premature confirmation created a prior complaint on this account.',
         owner: 'consultant',
       },
@@ -1073,7 +1073,7 @@ export function createSnapshot(): DemoSnapshot {
     signals: baselineSignals(),
     avaRuns: baselineAvaRuns(),
     selectedInteractionId: 'int-jordan',
-    selectedCaseId: null,
+    selectedCaseId: 'case-jordan',
     search: '',
     toasts: [],
     openCases: 18,

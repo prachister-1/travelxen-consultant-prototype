@@ -1,13 +1,14 @@
 import { useEffect, useState } from 'react'
 import { NavLink, Outlet, useLocation } from 'react-router-dom'
-import { Bell, CircleHelp, GraduationCap, Inbox, Plane, RotateCcw, Search, Workflow } from 'lucide-react'
+import { Bell, CircleHelp, GraduationCap, Inbox, Layers, Plane, RotateCcw, Search, Workflow } from 'lucide-react'
 import { useDemo } from './store'
 
 const nav = [
-  { to: '/', label: 'Inbox', icon: Inbox, end: true },
-  { to: '/orchestration', label: 'Agents', icon: Workflow },
-  { to: '/workspace', label: 'Trip', icon: Plane },
-  { to: '/learning', label: 'Quality', icon: GraduationCap },
+  { to: '/', label: 'Inbox', short: 'Inbox', icon: Inbox, end: true },
+  { to: '/workspace', label: 'Workspace', short: 'Trip', icon: Plane, end: false },
+  { to: '/context', label: 'Shared context', short: 'Context', icon: Layers, end: false },
+  { to: '/orchestration', label: 'Agents', short: 'Agents', icon: Workflow, end: false },
+  { to: '/learning', label: 'Resolution hub', short: 'Hub', icon: GraduationCap, end: false },
 ]
 
 function NavanMark() {
@@ -111,12 +112,12 @@ export function ConsultantShell() {
             </button>
             {helpOpen ? (
               <div className="card absolute right-0 mt-2 w-[360px] p-4 text-sm" role="dialog" aria-label="Demo help">
-                <div className="font-medium">Presenter path</div>
+                <div className="font-medium">Walkthrough</div>
                 <ol className="mt-2 list-decimal space-y-1 pl-4 text-muted">
-                  <li>Inbox — Jordan Hale is Ava GDS: BA 117 delay, missed AA 198. Replay the GDS facts, then Let Ava ticket AA 177.</li>
-                  <li>Maya Patel asked for a person — attest EI 60. Sofia is specialist. Do not mix the two.</li>
-                  <li>Agents — Genesys takes the message, then intent, routing, and knowledge pick who handles it. Pick Jordan, Maya, or Daniel. Play. Open the trip.</li>
-                  <li>Capture learning so the next issued-ticket + waiver miss-connect stays with Ava.</li>
+                  <li>Inbox — pick Jordan Hale (Ava GDS), Maya Patel (asked for a person), or Daniel Kim (stale inventory).</li>
+                  <li>Shared context — everything on this trip in one place.</li>
+                  <li>Agents — play who works the trip, then open it.</li>
+                  <li>Resolution hub — what was verified, what we learned, what Ava can do next time.</li>
                 </ol>
               </div>
             ) : null}
@@ -138,40 +139,25 @@ export function ConsultantShell() {
       <div className="flex min-h-[calc(100vh-56px)]">
         <aside className="hidden w-[200px] shrink-0 bg-ink p-3 text-white lg:flex lg:flex-col">
           <div className="px-2 pt-2 pb-3 text-[10px] font-medium tracking-[0.14em] text-white/45 uppercase">Console</div>
-          {nav.map((item) => {
-            const Icon = item.icon
-            return (
-              <NavLink
-                key={item.to}
-                to={item.to}
-                end={item.end}
-                className={({ isActive }) =>
-                  `mb-0.5 flex items-center gap-2 rounded-lg px-3 py-2.5 text-sm ${
-                    isActive ? 'bg-white/10 font-medium text-white' : 'text-white/70 hover:bg-white/10 hover:text-white'
-                  }`
-                }
-              >
-                <Icon size={16} />
-                {item.label}
-              </NavLink>
-            )
-          })}
+          {nav.map((item) => (
+            <SideLink key={item.to} item={item} />
+          ))}
           <p className="mt-auto px-3 pt-8 pb-3 text-[11px] leading-relaxed text-white/45">All systems operational</p>
         </aside>
         <main className={`min-w-0 flex-1 ${flush ? 'p-0' : 'p-4 md:p-6'}`}>
-          <nav className={`grid grid-cols-4 gap-2 lg:hidden ${flush ? 'p-3' : 'mb-4'}`}>
+          <nav className={`grid grid-cols-5 gap-1.5 lg:hidden ${flush ? 'p-3' : 'mb-4'}`}>
             {nav.map((item) => (
               <NavLink
                 key={item.to}
                 to={item.to}
                 end={item.end}
                 className={({ isActive }) =>
-                  `rounded-full border px-2 py-2 text-center text-[11px] font-medium ${
+                  `rounded-full border px-1 py-2 text-center text-[10px] font-medium ${
                     isActive ? 'border-purple bg-purple-soft text-purple' : 'border-line bg-white text-muted'
                   }`
                 }
               >
-                {item.label}
+                {item.short}
               </NavLink>
             ))}
           </nav>
@@ -185,6 +171,28 @@ export function ConsultantShell() {
         ))}
       </div>
     </div>
+  )
+}
+
+function SideLink({
+  item,
+}: {
+  item: { to: string; label: string; icon: typeof Inbox; end?: boolean }
+}) {
+  const Icon = item.icon
+  return (
+    <NavLink
+      to={item.to}
+      end={item.end}
+      className={({ isActive }) =>
+        `mb-0.5 flex items-center gap-2 rounded-lg px-3 py-2.5 text-sm ${
+          isActive ? 'bg-white/10 font-medium text-white' : 'text-white/70 hover:bg-white/10 hover:text-white'
+        }`
+      }
+    >
+      <Icon size={16} />
+      {item.label}
+    </NavLink>
   )
 }
 

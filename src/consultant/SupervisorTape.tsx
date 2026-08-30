@@ -1,4 +1,5 @@
 import { useNavigate } from 'react-router-dom'
+import { useDemo } from './store'
 import type { Interaction, SupervisorRoute } from './types'
 
 const ROUTE_LABEL: Record<SupervisorRoute, string> = {
@@ -17,6 +18,7 @@ export function SupervisorTape({
   playing: boolean
 }) {
   const navigate = useNavigate()
+  const { dispatch } = useDemo()
   const d = interaction?.supervisor
   const decided = active >= 4 && d
   const scoring = active >= 3
@@ -54,7 +56,10 @@ export function SupervisorTape({
           <button
             type="button"
             className="btn btn-ghost mt-3 w-full bg-white text-xs"
-            onClick={() => navigate('/orchestration')}
+            onClick={() => {
+              if (interaction) dispatch({ type: 'select-interaction', id: interaction.id })
+              navigate('/orchestration')
+            }}
           >
             See how agents work together
           </button>

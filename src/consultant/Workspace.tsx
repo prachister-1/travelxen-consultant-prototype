@@ -33,7 +33,7 @@ type TripTab = 'flights' | 'hotels' | 'cars'
 type ChatTab = 'chat' | 'phone' | 'email'
 
 export function ConsultantWorkspace() {
-  const { cases, selectedCaseId, dispatch, search, interactions } = useDemo()
+  const { cases, selectedCase, selectedCaseId, dispatch, search, interactions } = useDemo()
   const navigate = useNavigate()
   const [tripTab, setTripTab] = useState<TripTab>('flights')
   const filtered = cases.filter((c) => {
@@ -41,7 +41,7 @@ export function ConsultantWorkspace() {
     const q = search.toLowerCase()
     return `${c.traveller} ${c.caseNumber} ${c.pnr} ${c.intent} ${c.trip}`.toLowerCase().includes(q)
   })
-  const active = cases.find((c) => c.id === selectedCaseId)
+  const active = selectedCase ?? cases.find((c) => c.id === selectedCaseId)
 
   if (!active) {
     return (

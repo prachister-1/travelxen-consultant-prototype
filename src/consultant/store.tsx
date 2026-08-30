@@ -132,6 +132,17 @@ function addToast(state: DemoSnapshot, message: string): DemoSnapshot {
   }
 }
 
+function selectPair(state: DemoSnapshot, interactionId?: string, caseId?: string): DemoSnapshot {
+  const byInteraction = interactionId ? state.interactions.find((i) => i.id === interactionId) : undefined
+  const resolvedCaseId = caseId ?? byInteraction?.caseId
+  const byCase = resolvedCaseId ? state.interactions.find((i) => i.caseId === resolvedCaseId) : undefined
+  return {
+    ...state,
+    selectedInteractionId: byInteraction?.id ?? byCase?.id ?? state.selectedInteractionId,
+    selectedCaseId: resolvedCaseId ?? state.selectedCaseId,
+  }
+}
+
 function patchCase(state: DemoSnapshot, id: string, patch: Partial<DemoSnapshot['cases'][number]>): DemoSnapshot {
   return {
     ...state,
@@ -147,9 +158,9 @@ function reducer(state: DemoSnapshot, action: Action): DemoSnapshot {
     case 'search':
       return { ...state, search: action.q }
     case 'select-interaction':
-      return { ...state, selectedInteractionId: action.id }
+      return selectPair(state, action.id, undefined)
     case 'select-case':
-      return { ...state, selectedCaseId: action.id }
+      return selectPair(state, undefined, action.id)
     case 'open-case': {
       const interaction = state.interactions.find((i) => i.caseId === action.id)
       return addToast(
@@ -376,7 +387,7 @@ function reducer(state: DemoSnapshot, action: Action): DemoSnapshot {
             stillOpen && c.urgency === 'urgent' ? Math.max(0, state.urgentDisruptions - 1) : state.urgentDisruptions,
           interactions: state.interactions.map((i) => (i.caseId === action.caseId ? { ...i, state: 'resolved' } : i)),
         },
-        'Learning signal captured — open in Quality & Learning',
+        'Learning signal captured — open in Resolution hub',
       )
     }
     case 'refresh-inventory': {

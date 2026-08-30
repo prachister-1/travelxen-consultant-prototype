@@ -53,33 +53,48 @@ export function IntakeQueue() {
       <div className="mb-5">
         <h1 className="text-[28px] font-medium tracking-tight">Inbox</h1>
         <p className="mt-1 max-w-3xl text-sm text-muted">
-          Two demo paths. Jordan Hale is Ava GDS — open that trip and let Ava ticket. Maya Patel asked for a person.
+          Pick Jordan Hale (Ava GDS), Maya Patel (asked for a person), or Daniel Kim (stale inventory). Shared context, Agents, and Workspace stay on that trip.
         </p>
       </div>
 
-      <section className="mb-5 grid gap-3 md:grid-cols-2">
+      <section className="mb-5 grid gap-3 md:grid-cols-3">
         <button
           type="button"
-          className="card p-4 text-left ring-2 ring-purple hover:bg-purple-soft/40"
+          className={`card p-4 text-left ${selected?.id === 'int-jordan' ? 'ring-2 ring-purple' : 'hover:border-purple/40'}`}
           onClick={() => {
-            dispatch({ type: 'open-case', id: 'case-jordan' })
-            navigate('/workspace')
+            dispatch({ type: 'select-interaction', id: 'int-jordan' })
+            navigate('/context')
           }}
         >
           <div className="text-[11px] font-medium tracking-[0.12em] text-purple uppercase">Ava GDS path</div>
           <div className="mt-1 text-sm font-medium">Jordan Hale · BA 117 delayed +2h 10m</div>
           <p className="mt-1 text-[12px] text-muted">
-            AA 198 will be missed. Ticket issued · eligibility confirmed · waiver available · supplier 2 min ago. Opens the trip — Let Ava ticket AA 177.
+            Ticket issued · waiver available · supplier 2 min ago. Opens his shared context — then Open in Agents or let Ava ticket AA 177.
           </p>
         </button>
         <button
           type="button"
-          className="card p-4 text-left hover:border-purple/40"
-          onClick={() => dispatch({ type: 'select-interaction', id: 'int-maya' })}
+          className={`card p-4 text-left ${selected?.id === 'int-maya' ? 'ring-2 ring-purple' : 'hover:border-purple/40'}`}
+          onClick={() => {
+            dispatch({ type: 'select-interaction', id: 'int-maya' })
+            navigate('/context')
+          }}
         >
-          <div className="text-[11px] font-medium tracking-[0.12em] text-muted uppercase">Human judgment</div>
-          <div className="mt-1 text-sm font-medium">Maya Patel · asked for a person</div>
-          <p className="mt-1 text-[12px] text-muted">Missed EI 154. Stay in Inbox, then attest EI 60. Do not mix with Jordan.</p>
+          <div className="text-[11px] font-medium tracking-[0.12em] text-muted uppercase">Asked for a person</div>
+          <div className="mt-1 text-sm font-medium">Maya Patel · missed connection</div>
+          <p className="mt-1 text-[12px] text-muted">Opens her shared context. Attest the 19:30 meeting, then Ava tickets EI 60.</p>
+        </button>
+        <button
+          type="button"
+          className={`card p-4 text-left ${selected?.id === 'int-daniel' ? 'ring-2 ring-purple' : 'hover:border-purple/40'}`}
+          onClick={() => {
+            dispatch({ type: 'select-interaction', id: 'int-daniel' })
+            navigate('/context')
+          }}
+        >
+          <div className="text-[11px] font-medium tracking-[0.12em] text-muted uppercase">Stale inventory</div>
+          <div className="mt-1 text-sm font-medium">Daniel Kim · UA 918 cancelled</div>
+          <p className="mt-1 text-[12px] text-muted">Opens his shared context. Do not ticket until the seat list is refreshed.</p>
         </button>
       </section>
 
@@ -122,10 +137,6 @@ export function IntakeQueue() {
                   type="button"
                   onClick={() => {
                     dispatch({ type: 'select-interaction', id: item.id })
-                    if (cases.find((c) => c.id === item.caseId)?.gdsFacts?.length) {
-                      dispatch({ type: 'open-case', id: item.caseId })
-                      navigate('/workspace')
-                    }
                   }}
                   className={`card flex w-full items-start gap-3 px-4 py-3 text-left transition ${
                     active ? 'ring-2 ring-purple' : 'hover:border-purple/30'
