@@ -37,21 +37,21 @@ const LEAD_AGENTS = [
     id: 'genesys',
     simple: 'Takes the message',
     name: 'Genesys',
-    job: 'Takes WhatsApp, phone, chat, or email. Opens the case for you.',
+    job: 'Takes the traveller’s WhatsApp, phone call, chat, or email and opens the trip. You do not create the case.',
     icon: Headphones,
   },
   {
     id: 'supervisor',
     simple: 'Picks who handles it',
     name: 'AI Supervisor',
-    job: 'Sends the trip to Ava, to you, or to a documents specialist.',
+    job: 'Reads the request and decides: Ava can finish it, you need to confirm one thing, or it must go to a documents specialist.',
     icon: Shield,
   },
   {
     id: 'ava',
     simple: 'Tickets when it is safe',
     name: 'Ava',
-    job: 'Tickets the change when the rules are clear. You do not type GDS.',
+    job: 'Books the new flight when the ticket, waiver, and seats are already confirmed. You do not type GDS.',
     icon: Bot,
   },
 ] as const
@@ -77,7 +77,8 @@ export function AgentOrchestration() {
       </div>
 
       <section className="card mb-5 p-4">
-        <div className="text-[11px] font-medium tracking-[0.12em] text-muted uppercase">All 11 agents from the case study</div>
+        <div className="text-[11px] font-medium tracking-[0.12em] text-muted uppercase">What each AI agent does</div>
+        <p className="mt-1 text-[13px] text-muted">Read this list first. Then pick a trip to see them work.</p>
         <div className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
           {LEAD_AGENTS.map((agent) => {
             const Icon = agent.icon
@@ -92,7 +93,7 @@ export function AgentOrchestration() {
                     <div className="text-[11px] text-muted">{agent.name}</div>
                   </div>
                 </div>
-                <p className="mt-2 text-[12px] text-muted">{agent.job}</p>
+                <p className="mt-2 text-[13px] text-ink">{agent.job}</p>
               </div>
             )
           })}
@@ -111,7 +112,7 @@ export function AgentOrchestration() {
                     <div className="text-[11px] text-muted">{h.name}</div>
                   </div>
                 </div>
-                <p className="mt-2 text-[12px] text-muted">{h.job}</p>
+                <p className="mt-2 text-[13px] text-ink">{h.job}</p>
               </div>
             )
           })}
@@ -212,8 +213,9 @@ export function AgentOrchestration() {
                           <span className="text-[11px] text-muted">{h.name}</span>
                           <span className={`chip ${statusClass(status)}`}>{statusWord(status, active)}</span>
                         </span>
+                        <span className="mt-0.5 block text-[13px] text-ink">{h.job}</span>
                         <span className="mt-0.5 block text-[13px] text-muted">
-                          {skipped ? 'Not needed on this trip.' : visible ? row.result : row.doing}
+                          {skipped ? 'Not needed on this trip.' : visible ? row.result : 'Waiting to run on this trip.'}
                         </span>
                       </span>
                     </button>

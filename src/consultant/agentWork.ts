@@ -34,7 +34,7 @@ export const HELPERS: HelperDef[] = [
     name: 'PNR summariser',
     simple: 'Explains the booking',
     owner: 'Ava',
-    job: 'Turns the PNR and chat into a few plain sentences.',
+    job: 'Reads the PNR and the traveller’s message, then tells you what is broken in plain English — delay, missed connection, or a simple request.',
     speeds: 'You can read the trip without opening GDS.',
   },
   {
@@ -42,7 +42,7 @@ export const HELPERS: HelperDef[] = [
     name: 'Constraint watch',
     simple: 'Finds the meeting time',
     owner: 'TravelXen',
-    job: 'Finds if the traveller must land before a meeting.',
+    job: 'Finds if the traveller must land before a meeting, dinner, or board. You use this to pick a flight that still works.',
     speeds: 'You confirm one time instead of rebuilding the trip from chat.',
   },
   {
@@ -50,7 +50,7 @@ export const HELPERS: HelperDef[] = [
     name: 'Inventory scout',
     simple: 'Checks the seats',
     owner: 'TravelXen',
-    job: 'Checks that the seats are still there, and that the check is fresh.',
+    job: 'Looks up whether the new flight still has seats, and how old that check is. If it is older than 5 minutes, do not ticket.',
     speeds: 'Stops a promise on a seat that may already be gone.',
   },
   {
@@ -58,7 +58,7 @@ export const HELPERS: HelperDef[] = [
     name: 'Fare-rule reader',
     simple: 'Reads the ticket rules',
     owner: 'TravelXen',
-    job: 'Reads waivers, change rules, and extra cost.',
+    job: 'Reads the fare, airline waiver, and change cost. Tells you if the new flight is free or if the traveller must pay.',
     speeds: 'The recommended flight is already tagged in-policy.',
   },
   {
@@ -66,7 +66,7 @@ export const HELPERS: HelperDef[] = [
     name: 'Policy checker',
     simple: 'Checks company policy',
     owner: 'TravelXen',
-    job: 'Checks the company will pay for this change.',
+    job: 'Checks the company travel policy will pay for this change. Stops a booking that needs a manager.',
     speeds: 'Stops a cost that would need a manager.',
   },
   {
@@ -74,7 +74,7 @@ export const HELPERS: HelperDef[] = [
     name: 'GDS copilot',
     simple: 'Writes the ticket steps',
     owner: 'Ava',
-    job: 'Writes the ticket steps. You never type GDS.',
+    job: 'Prepares the GDS ticket steps. Ava runs them. You never type Sabre or Amadeus.',
     speeds: 'You can finish a reissue without Sabre training.',
   },
   {
@@ -82,7 +82,7 @@ export const HELPERS: HelperDef[] = [
     name: 'Message drafter',
     simple: 'Writes the traveller message',
     owner: 'Ava',
-    job: 'Writes the update. It sends only after the ticket is real.',
+    job: 'Drafts the WhatsApp or email. It stays locked until the new ticket is real, so you never promise a seat too early.',
     speeds: 'You do not write a WhatsApp from scratch.',
   },
   {
@@ -90,7 +90,7 @@ export const HELPERS: HelperDef[] = [
     name: 'Quality loop',
     simple: 'Saves this for next time',
     owner: 'Quality',
-    job: 'Saves what worked so Ava can do the next similar trip alone.',
+    job: 'After the trip is finished, saves the rule so Ava can ticket the next similar trip without you.',
     speeds: 'Today’s confirm becomes tomorrow’s auto-ticket.',
   },
 ]
