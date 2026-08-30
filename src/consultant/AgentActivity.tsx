@@ -63,7 +63,7 @@ export function AgentWorkStrip({
         return (
           <span key={row.helperId} className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-medium ${statusClass(row.status)}`}>
             <Icon size={11} />
-            {helperDef(row.helperId).name}
+            {helperDef(row.helperId).simple}
             <span className="opacity-80">· {statusLabel(row.status)}</span>
           </span>
         )
@@ -82,7 +82,7 @@ export function InboxAgentStrip({ c, onOpen }: { c: ServiceCase; onOpen: () => v
       <div className="flex items-center justify-between border-b border-line px-4 py-3">
         <div>
           <div className="text-[11px] font-medium tracking-[0.12em] text-muted uppercase">Who is working this</div>
-          <div className="text-sm font-medium">Helpers replace GDS training — not the consultant</div>
+          <div className="text-sm font-medium">AI agents do the booking work. You only confirm when needed.</div>
         </div>
         <button type="button" className="btn btn-ghost text-xs" onClick={onOpen}>
           Open Agents
@@ -98,7 +98,7 @@ export function InboxAgentStrip({ c, onOpen }: { c: ServiceCase; onOpen: () => v
               </span>
               <div className="min-w-0 flex-1">
                 <div className="flex flex-wrap items-center gap-2">
-                  <span className="text-[13px] font-medium">{helperDef(row.helperId).name}</span>
+                  <span className="text-[13px] font-medium">{helperDef(row.helperId).simple}</span>
                   <span className={`chip ${statusClass(row.status)}`}>{statusLabel(row.status)}</span>
                 </div>
                 <p className="text-[12px] text-muted">{row.doing}</p>
@@ -125,10 +125,10 @@ export function HelperBoard({
   const work = assignmentsFor(c)
   return (
     <section className="card p-4">
-      <h2 className="text-sm font-semibold">Agents that replace GDS training, not the consultant</h2>
-      <p className="mt-1 text-[13px] text-muted">
-        Click a helper to see what it is doing on this contact. Replay lights them in order. The human only attests.
-      </p>
+        <h2 className="text-sm font-semibold">AI agents that do the booking work</h2>
+        <p className="mt-1 text-[13px] text-muted">
+          Click one to see what it is doing. You only confirm when a person is needed.
+        </p>
       <div className="mt-3 grid gap-2 md:grid-cols-2">
         {HELPERS.map((h) => {
           const assignment = work.find((w) => w.helperId === h.id)
@@ -150,7 +150,8 @@ export function HelperBoard({
                 </span>
                 <div className="min-w-0 flex-1">
                   <div className="flex flex-wrap items-center justify-between gap-2">
-                    <div className="text-sm font-medium">{h.name}</div>
+                    <div className="text-sm font-medium">{h.simple}</div>
+                    <div className="text-[11px] text-muted">{h.name}</div>
                     <span className={`chip ${statusClass(status)}`}>{statusLabel(status)}</span>
                   </div>
                   <p className="mt-1 text-[12px] text-ink">{assignment?.doing ?? h.job}</p>

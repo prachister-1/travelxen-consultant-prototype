@@ -4,23 +4,20 @@ import {
   BookOpen,
   Bot,
   CalendarClock,
+  FileText,
   GraduationCap,
+  Headphones,
   Languages,
   MessageSquare,
   Radar,
+  Shield,
   ShieldCheck,
   Terminal,
   UserRound,
-  FileText,
   Workflow,
 } from 'lucide-react'
 import { statusClass } from './AgentActivity'
-import {
-  assignmentsFor,
-  helperDef,
-  type HelperId,
-  type HelperStatus,
-} from './agentWork'
+import { assignmentsFor, HELPERS, type HelperId, type HelperStatus } from './agentWork'
 import { useDemo } from './store'
 import type { Interaction, ServiceCase, SupervisorRoute } from './types'
 
@@ -35,6 +32,30 @@ const ICONS: Record<HelperId, typeof Languages> = {
   quality: GraduationCap,
 }
 
+const LEAD_AGENTS = [
+  {
+    id: 'genesys',
+    simple: 'Takes the message',
+    name: 'Genesys',
+    job: 'Takes WhatsApp, phone, chat, or email. Opens the case for you.',
+    icon: Headphones,
+  },
+  {
+    id: 'supervisor',
+    simple: 'Picks who handles it',
+    name: 'AI Supervisor',
+    job: 'Sends the trip to Ava, to you, or to a documents specialist.',
+    icon: Shield,
+  },
+  {
+    id: 'ava',
+    simple: 'Tickets when it is safe',
+    name: 'Ava',
+    job: 'Tickets the change when the rules are clear. You do not type GDS.',
+    icon: Bot,
+  },
+] as const
+
 const FEATURED = ['int-jordan', 'int-maya', 'int-daniel'] as const
 
 export function AgentOrchestration() {
@@ -42,21 +63,60 @@ export function AgentOrchestration() {
   const navigate = useNavigate()
   const selected = interactions.find((i) => i.id === selectedInteractionId) ?? interactions[0]
   const selectedCase = cases.find((c) => c.id === selected?.caseId)
-  const work = useMemo(
-    () => (selectedCase ? assignmentsFor(selectedCase).filter((a) => !a.skip) : []),
-    [selectedCase],
-  )
-  const playback = useOrchPlayback(selected?.id, Math.max(work.length - 1, 0))
+  const work = useMemo(() => (selectedCase ? assignmentsFor(selectedCase) : []), [selectedCase])
+  const playback = useOrchPlayback(selected?.id, Math.max(HELPERS.length - 1, 0))
   const owner = ownerCopy(selected, selectedCase)
 
   return (
-    <div className="mx-auto max-w-[820px]">
+    <div className="mx-auto max-w-[920px]">
       <div className="mb-5">
-        <h1 className="text-[28px] font-medium tracking-tight">Agents</h1>
+        <h1 className="text-[28px] font-medium tracking-tight">Who is helping you</h1>
         <p className="mt-1 text-sm text-muted">
-          Pick a contact. See who owns it. Replay what the helpers already did. Then open the trip.
+          These AI agents do the booking work. You do not type GDS. You only step in when a traveller asks for a person, or when it is not safe to ticket.
         </p>
       </div>
+
+      <section className="card mb-5 p-4">
+        <div className="text-[11px] font-medium tracking-[0.12em] text-muted uppercase">All 11 agents from the case study</div>
+        <div className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+          {LEAD_AGENTS.map((agent) => {
+            const Icon = agent.icon
+            return (
+              <div key={agent.id} className="rounded-xl border border-line bg-canvas px-3 py-3">
+                <div className="flex items-center gap-2">
+                  <span className="grid h-8 w-8 place-items-center rounded-lg bg-white text-purple">
+                    <Icon size={14} />
+                  </span>
+                  <div>
+                    <div className="text-sm font-medium">{agent.simple}</div>
+                    <div className="text-[11px] text-muted">{agent.name}</div>
+                  </div>
+                </div>
+                <p className="mt-2 text-[12px] text-muted">{agent.job}</p>
+              </div>
+            )
+          })}
+          {HELPERS.map((h) => {
+            const Icon = ICONS[h.id]
+            const assignment = work.find((w) => w.helperId === h.id)
+            const onTrip = Boolean(assignment) && !assignment?.skip
+            return (
+              <div key={h.id} className={`rounded-xl border px-3 py-3 ${onTrip ? 'border-purple/40 bg-purple-soft/30' : 'border-line bg-canvas'}`}>
+                <div className="flex items-center gap-2">
+                  <span className="grid h-8 w-8 place-items-center rounded-lg bg-white text-purple">
+                    <Icon size={14} />
+                  </span>
+                  <div>
+                    <div className="text-sm font-medium">{h.simple}</div>
+                    <div className="text-[11px] text-muted">{h.name}</div>
+                  </div>
+                </div>
+                <p className="mt-2 text-[12px] text-muted">{h.job}</p>
+              </div>
+            )
+          })}
+        </div>
+      </section>
 
       <div className="mb-4 grid gap-3 md:grid-cols-3">
         {FEATURED.map((id) => {
@@ -101,7 +161,7 @@ export function AgentOrchestration() {
           <section className="card mb-4 overflow-hidden">
             <div className="flex flex-wrap items-start justify-between gap-3 border-b border-line px-4 py-3">
               <div>
-                <div className="text-[11px] font-medium tracking-[0.12em] text-muted uppercase">Who owns this</div>
+                <div className="text-[11px] font-medium tracking-[0.12em] text-muted uppercase">Who should handle this trip</div>
                 <div className="mt-1 flex items-center gap-2 text-sm font-medium">
                   <span className={`grid h-8 w-8 place-items-center rounded-lg ${owner.tone}`}>{owner.icon}</span>
                   {owner.headline}
@@ -109,33 +169,34 @@ export function AgentOrchestration() {
               </div>
               <span className={`chip ${routeChip(selected.supervisor.routeTo)}`}>{routeLabel(selected.supervisor.routeTo)}</span>
             </div>
-            <p className="px-4 py-3 text-sm text-ink">{selected.supervisor.reason}</p>
+            <p className="px-4 py-3 text-sm">{plainReason(selected, selectedCase)}</p>
           </section>
 
           <section className="card mb-4 overflow-hidden">
             <div className="flex flex-wrap items-center justify-between gap-2 border-b border-line px-4 py-3">
               <div>
-                <div className="text-[11px] font-medium tracking-[0.12em] text-muted uppercase">Helpers on this contact</div>
-                <div className="text-sm font-medium">Consultant does not type GDS. Helpers already did the cryptic.</div>
+                <div className="text-[11px] font-medium tracking-[0.12em] text-muted uppercase">What they already did</div>
+                <div className="text-sm font-medium">Play this to watch each agent work on {selected.traveller.split(' ')[0]}.</div>
               </div>
               <button type="button" className="btn btn-primary text-xs" onClick={playback.play}>
-                Replay
+                Play
               </button>
             </div>
             <ol className="divide-y divide-line">
-              {work.map((row, i) => {
+              {HELPERS.map((h, i) => {
+                const row = work.find((w) => w.helperId === h.id)
+                const skipped = !row || row.skip
                 const visible = playback.step >= i
-                const active = playback.playing && playback.step === i
-                const status: HelperStatus = !visible ? 'idle' : active ? 'working' : 'done'
-                const Icon = ICONS[row.helperId]
-                const def = helperDef(row.helperId)
+                const active = playback.playing && playback.step === i && !skipped
+                const status: HelperStatus = skipped ? 'skipped' : !visible ? 'idle' : active ? 'working' : row.blocked ? 'blocked' : 'done'
+                const Icon = ICONS[h.id]
                 return (
-                  <li key={row.helperId}>
+                  <li key={h.id}>
                     <button
                       type="button"
                       onClick={() => playback.jump(i)}
                       className={`flex w-full items-start gap-3 px-4 py-3 text-left ${
-                        active ? 'bg-purple-soft/50' : visible ? 'bg-white' : 'bg-white opacity-45'
+                        active ? 'bg-purple-soft/50' : skipped ? 'bg-white opacity-50' : visible ? 'bg-white' : 'bg-white opacity-45'
                       }`}
                     >
                       <span
@@ -147,10 +208,13 @@ export function AgentOrchestration() {
                       </span>
                       <span className="min-w-0 flex-1">
                         <span className="flex flex-wrap items-center gap-2">
-                          <span className="text-sm font-medium">{def.name}</span>
-                          <span className={`chip ${statusClass(status)}`}>{active ? 'Working' : visible ? 'Done' : 'Queued'}</span>
+                          <span className="text-sm font-medium">{h.simple}</span>
+                          <span className="text-[11px] text-muted">{h.name}</span>
+                          <span className={`chip ${statusClass(status)}`}>{statusWord(status, active)}</span>
                         </span>
-                        <span className="mt-0.5 block text-[13px] text-muted">{visible ? row.result : row.doing}</span>
+                        <span className="mt-0.5 block text-[13px] text-muted">
+                          {skipped ? 'Not needed on this trip.' : visible ? row.result : row.doing}
+                        </span>
                       </span>
                     </button>
                   </li>
@@ -159,7 +223,7 @@ export function AgentOrchestration() {
             </ol>
           </section>
 
-          <div className="mb-5 flex flex-wrap gap-2">
+          <div className="mb-5">
             <button
               type="button"
               className="btn btn-primary"
@@ -168,26 +232,26 @@ export function AgentOrchestration() {
                 navigate('/workspace')
               }}
             >
-              <Workflow size={15} /> Open trip
+              <Workflow size={15} /> Open this trip
             </button>
           </div>
         </>
       ) : null}
 
       <section className="card p-4">
-        <div className="text-[11px] font-medium tracking-[0.12em] text-muted uppercase">Three rules Ava follows</div>
+        <div className="text-[11px] font-medium tracking-[0.12em] text-muted uppercase">When you ticket vs when Ava tickets</div>
         <ul className="mt-3 space-y-3 text-sm">
           <li>
-            <div className="font-medium">Issued ticket + waiver + snapshot under 5 min → Ava tickets</div>
-            <p className="text-[13px] text-muted">Jordan Hale. Consultant does not open GDS.</p>
+            <div className="font-medium">Ticket already issued, waiver exists, seats checked in the last 5 minutes</div>
+            <p className="text-[13px] text-muted">Ava tickets. Example: Jordan Hale. You do not type anything.</p>
           </li>
           <li>
-            <div className="font-medium">Traveller asked for a person → consultant attests, then Ava</div>
-            <p className="text-[13px] text-muted">Maya Patel. Attest the meeting. Hand EI 60 back.</p>
+            <div className="font-medium">Traveller asked for a person</div>
+            <p className="text-[13px] text-muted">You confirm the meeting time. Then Ava tickets. Example: Maya Patel.</p>
           </li>
           <li>
-            <div className="font-medium">Stale inventory → never autopilot</div>
-            <p className="text-[13px] text-muted">Daniel Kim. Refresh first, then Ava may ticket.</p>
+            <div className="font-medium">Seat check is older than 5 minutes</div>
+            <p className="text-[13px] text-muted">Do not ticket. Refresh first. Example: Daniel Kim.</p>
           </li>
         </ul>
       </section>
@@ -196,41 +260,65 @@ export function AgentOrchestration() {
 }
 
 function pathLabel(item: Interaction, c: ServiceCase) {
-  if (c.gdsFacts?.length) return 'Ava GDS'
-  if (item.supervisor.routeTo === 'human' && c.workflow === 'triage') return 'Hold'
-  if (item.supervisor.routeTo === 'human') return 'Human'
-  if (item.supervisor.routeTo === 'specialist') return 'Specialist'
-  return 'Ava'
+  if (c.gdsFacts?.length) return 'Ava can ticket'
+  if (item.supervisor.routeTo === 'human' && c.workflow === 'triage') return 'Wait'
+  if (item.supervisor.routeTo === 'human') return 'Needs you'
+  if (item.supervisor.routeTo === 'specialist') return 'Not travel'
+  return 'Ava can ticket'
 }
 
 function pathHint(item: Interaction, c: ServiceCase) {
-  if (c.gdsFacts?.length) return 'BA 117 delay. Ava tickets AA 177.'
-  if (c.id === 'case-maya') return 'Asked for a person. Attest EI 60.'
-  if (c.id === 'case-daniel') return 'Inventory stale. Do not ticket yet.'
+  if (c.gdsFacts?.length) return 'Flight delayed. Missed connection. Ava tickets the next flight.'
+  if (c.id === 'case-maya') return 'She asked for a person. You confirm the meeting, then Ava tickets.'
+  if (c.id === 'case-daniel') return 'Seat list may be out of date. Do not ticket yet.'
   return item.intent
+}
+
+function plainReason(selected: Interaction, c: ServiceCase) {
+  if (c.gdsFacts?.length) {
+    return 'The ticket is already issued. Rebooking is allowed. The airline waiver is available. Seats were checked 2 minutes ago. Ava can ticket. You do not take this chat.'
+  }
+  if (c.id === 'case-maya') {
+    return 'Ava offered a self-serve rebook. Maya asked for a person so her business fare and 19:30 meeting stay protected. You confirm the meeting time. Then Ava tickets.'
+  }
+  if (c.id === 'case-daniel') {
+    return 'The flight was cancelled. The seat list is more than 5 minutes old. Do not ticket until it is refreshed.'
+  }
+  if (selected.supervisor.routeTo === 'specialist') {
+    return 'This is a visa or documents question. A travel consultant must not answer it. Send it to a documents specialist.'
+  }
+  return selected.supervisor.reason
 }
 
 function ownerCopy(selected?: Interaction, c?: ServiceCase) {
   const route = selected?.supervisor.routeTo
   if (route === 'ava') {
     return {
-      headline: c?.gdsFacts?.length ? 'Ava tickets. Do not take this chat.' : 'Ava owns this. Leave it.',
+      headline: c?.gdsFacts?.length ? 'Ava tickets this. Leave the chat.' : 'Ava owns this. Leave the chat.',
       icon: <Bot size={15} />,
       tone: 'bg-teal-soft text-teal',
     }
   }
   if (route === 'specialist') {
     return {
-      headline: 'Documents specialist. Ava will not answer.',
+      headline: 'Send to a documents specialist. Do not advise.',
       icon: <FileText size={15} />,
       tone: 'bg-critical-soft text-critical',
     }
   }
   return {
-    headline: 'Consultant attests. Ava still does the GDS.',
+    headline: 'You confirm one thing. Ava still tickets.',
     icon: <UserRound size={15} />,
     tone: 'bg-purple-soft text-purple',
   }
+}
+
+function statusWord(status: HelperStatus, active: boolean) {
+  if (active) return 'Working now'
+  if (status === 'done') return 'Done'
+  if (status === 'blocked') return 'Stopped'
+  if (status === 'skipped') return 'Not needed'
+  return 'Waiting'
 }
 
 function useOrchPlayback(interactionId?: string, maxStep = 0) {
@@ -274,9 +362,9 @@ function useOrchPlayback(interactionId?: string, maxStep = 0) {
 }
 
 function routeLabel(route: SupervisorRoute) {
-  if (route === 'ava') return 'Keep with Ava'
-  if (route === 'specialist') return 'Specialist'
-  return 'Consultant attests'
+  if (route === 'ava') return 'Ava tickets'
+  if (route === 'specialist') return 'Documents specialist'
+  return 'You confirm, then Ava'
 }
 
 function routeChip(route: SupervisorRoute) {

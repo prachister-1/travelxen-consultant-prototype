@@ -6,6 +6,7 @@ export type HelperStatus = 'idle' | 'working' | 'done' | 'blocked' | 'skipped'
 export interface HelperDef {
   id: HelperId
   name: string
+  simple: string
   owner: 'Ava' | 'TravelXen' | 'Quality'
   job: string
   speeds: string
@@ -31,58 +32,66 @@ export const HELPERS: HelperDef[] = [
   {
     id: 'summariser',
     name: 'PNR summariser',
+    simple: 'Explains the booking',
     owner: 'Ava',
-    job: 'Turns a messy PNR, chat and disruption into a few sentences. Native language, no cryptic.',
-    speeds: 'A new hire reads the miss-connect without opening a GDS mask.',
+    job: 'Turns the PNR and chat into a few plain sentences.',
+    speeds: 'You can read the trip without opening GDS.',
   },
   {
     id: 'calendar',
     name: 'Constraint watch',
+    simple: 'Finds the meeting time',
     owner: 'TravelXen',
-    job: 'Pins meeting times into the trip so routing is judged against a calendar, not a guess.',
-    speeds: 'Consultant attests one field instead of rebuilding the itinerary from chat.',
+    job: 'Finds if the traveller must land before a meeting.',
+    speeds: 'You confirm one time instead of rebuilding the trip from chat.',
   },
   {
     id: 'inventory',
     name: 'Inventory scout',
+    simple: 'Checks the seats',
     owner: 'TravelXen',
-    job: 'Keeps the fare snapshot under 5 minutes so nobody tickets stale availability.',
+    job: 'Checks that the seats are still there, and that the check is fresh.',
     speeds: 'Stops a promise on a seat that may already be gone.',
   },
   {
     id: 'rules',
     name: 'Fare-rule reader',
+    simple: 'Reads the ticket rules',
     owner: 'TravelXen',
-    job: 'Reads fare family, residual, waiver and penalties so the consultant does not decode CAT rules.',
-    speeds: 'Recommended flight is already tagged same-family / in-policy.',
+    job: 'Reads waivers, change rules, and extra cost.',
+    speeds: 'The recommended flight is already tagged in-policy.',
   },
   {
     id: 'policy',
     name: 'Policy checker',
+    simple: 'Checks company policy',
     owner: 'TravelXen',
-    job: 'Confirms company policy and disruption cap against the proposed itinerary.',
-    speeds: 'Stops a residual that would need a supervisor exception.',
+    job: 'Checks the company will pay for this change.',
+    speeds: 'Stops a cost that would need a manager.',
   },
   {
     id: 'gds',
     name: 'GDS copilot',
+    simple: 'Writes the ticket steps',
     owner: 'Ava',
-    job: 'Proposes availability, price and ticket commands. Executes only after attest or Ava containment.',
-    speeds: 'Consultants who were never Sabre/Amadeus trained can still finish a reissue.',
+    job: 'Writes the ticket steps. You never type GDS.',
+    speeds: 'You can finish a reissue without Sabre training.',
   },
   {
     id: 'draft',
     name: 'Message drafter',
+    simple: 'Writes the traveller message',
     owner: 'Ava',
-    job: 'Writes the traveller update, then locks send until ticketing verifies.',
-    speeds: 'Alex does not type a WhatsApp from scratch after every reissue.',
+    job: 'Writes the update. It sends only after the ticket is real.',
+    speeds: 'You do not write a WhatsApp from scratch.',
   },
   {
     id: 'quality',
     name: 'Quality loop',
+    simple: 'Saves this for next time',
     owner: 'Quality',
-    job: 'Turns a verified handle into a playbook so Ava can take the next one.',
-    speeds: 'Today’s attest becomes tomorrow’s containment.',
+    job: 'Saves what worked so Ava can do the next similar trip alone.',
+    speeds: 'Today’s confirm becomes tomorrow’s auto-ticket.',
   },
 ]
 
