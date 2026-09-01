@@ -52,7 +52,7 @@ export function StateChip({ value }: { value: InteractionState }) {
 export function Confidence({ value }: { value: number }) {
   const tone = value >= 85 ? 'text-teal' : value >= 70 ? 'text-amber' : 'text-critical'
   return (
-    <span className={`text-sm font-semibold tabular-nums ${tone}`} title="Model confidence · demo data">
+    <span className={`text-sm font-semibold tabular-nums ${tone}`} title="Confidence">
       {value}% confidence
     </span>
   )
@@ -69,7 +69,6 @@ export function SourceTag({
     <span className="inline-flex items-center gap-1 rounded-md bg-canvas px-1.5 py-0.5 text-[10px] font-medium tracking-wide text-muted uppercase">
       {system}
       <span className="normal-case tracking-normal text-ink/70">· {freshness}</span>
-      <span className="normal-case text-purple">demo</span>
     </span>
   )
 }

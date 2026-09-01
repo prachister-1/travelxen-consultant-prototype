@@ -107,7 +107,7 @@ export function IntakeQueue() {
       />
 
       <div className="mb-5 grid grid-cols-2 gap-3 xl:grid-cols-4">
-        <MetricCard label="Open cases" value={String(openCases)} hint="TravelXen · demo data" />
+        <MetricCard label="Open cases" value={String(openCases)} hint="TravelXen" />
         <MetricCard label="Urgent disruptions" value={String(urgentDisruptions)} hint="Same-day IRROPS" />
         <MetricCard label="Ava resolved today" value={`${avaResolvedToday}%`} hint="Hand in-policy work back to raise this" />
         <MetricCard label="Average handoff context completeness" value={`${contextCompleteness}%`} hint="Identity + intent + booking" />

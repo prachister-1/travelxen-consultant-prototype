@@ -54,7 +54,7 @@ export function ConsultantShell() {
           <NavanMark />
           <div className="leading-tight">
             <div className="text-[15px] font-medium tracking-tight">TravelXen</div>
-            <div className="text-[10px] text-muted">Agent console · demo data</div>
+            <div className="text-[10px] text-muted">Agent console</div>
           </div>
         </div>
         <div className="relative mx-2 hidden min-w-[200px] flex-1 max-w-lg md:block">
@@ -111,13 +111,13 @@ export function ConsultantShell() {
               <CircleHelp size={16} />
             </button>
             {helpOpen ? (
-              <div className="card absolute right-0 mt-2 w-[360px] p-4 text-sm" role="dialog" aria-label="Demo help">
+              <div className="card absolute right-0 mt-2 w-[360px] p-4 text-sm" role="dialog" aria-label="Help">
                 <div className="font-medium">Walkthrough</div>
                 <ol className="mt-2 list-decimal space-y-1 pl-4 text-muted">
-                  <li>Inbox — pick Jordan Hale (Ava GDS), Maya Patel (asked for a person), or Daniel Kim (stale inventory).</li>
+                  <li>Inbox — pick Jordan Hale (Ava tickets), Maya Patel (you confirm), or Daniel Kim (do not ticket yet).</li>
                   <li>Shared context — everything on this trip in one place.</li>
-                  <li>Agents — play who works the trip, then open it.</li>
-                  <li>Resolution hub — what was verified, what we learned, what Ava can do next time.</li>
+                  <li>Agents — Copilot helps you. Ava tickets when it is safe.</li>
+                  <li>Resolution hub — what happened, what we learned, what Ava does next time.</li>
                 </ol>
               </div>
             ) : null}

@@ -979,7 +979,7 @@ function PhoneIdle({ c }: { c: ServiceCase }) {
         Last contact was <ChannelLabel channel={c.channel} />. If {c.traveller.split(' ')[0]} calls back today, they route to Alex.
       </p>
       <button type="button" className="btn btn-ghost mt-4" disabled>
-        Start call · demo
+        Start call
       </button>
     </div>
   )

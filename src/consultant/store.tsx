@@ -40,7 +40,7 @@ function avaCompletionCopy(c: ServiceCase) {
   if (c.workflow === 'servicing') {
     return {
       label: `Ava sent VAT invoice from stored PNR ${c.pnr}`,
-      detail: 'No booking change · demo data',
+      detail: 'No booking change',
       outcome: `VAT invoice emailed · ${c.pnr}`,
       newPnr: null as string | null,
       optionId: c.selectedOptionId,
@@ -50,7 +50,7 @@ function avaCompletionCopy(c: ServiceCase) {
     const gdsOption = c.options.find((o) => o.recommended) ?? c.options.find((o) => o.id === c.selectedOptionId) ?? c.options[0]
     return {
       label: `Ava reissued ${gdsOption?.flight ?? 'AA 177'} on issued ticket · PNR ${c.pnr}`,
-      detail: `${gdsOption?.policyFit ?? 'Airline waiver'} · supplier 2 min · demo data`,
+      detail: `${gdsOption?.policyFit ?? 'Airline waiver'} · supplier 2 min`,
       outcome: `${gdsOption?.flight ?? 'AA 177'} · ${gdsOption?.travellerCost ?? '$0'} · waiver · ${c.pnr}`,
       newPnr: null,
       optionId: gdsOption?.id ?? c.selectedOptionId,
@@ -69,7 +69,7 @@ function avaCompletionCopy(c: ServiceCase) {
   }
   return {
     label: `Ava ticketed ${option?.flight ?? 'recommended option'} · PNR AVA84K2`,
-    detail: option?.policyFit ?? 'In-policy auto-ticket (demo)',
+    detail: option?.policyFit ?? 'In-policy auto-ticket',
     outcome: `${option?.flight ?? 'Reissue'} · ${option?.travellerCost ?? '€0'} · AVA84K2`,
     newPnr: 'AVA84K2',
     optionId: option?.id ?? c.selectedOptionId,
@@ -175,7 +175,7 @@ function reducer(state: DemoSnapshot, action: Action): DemoSnapshot {
             c.id === action.id && c.stage === 'intake' ? { ...c, stage: 'brief_ready' } : c,
           ),
         },
-        'Case opened in TravelXen with full handoff context (demo)',
+        'Case opened in TravelXen with full handoff context',
       )
     }
     case 'select-option': {
@@ -234,7 +234,7 @@ function reducer(state: DemoSnapshot, action: Action): DemoSnapshot {
             time: nowTime(),
             actor: 'Alex Morgan',
             label: label,
-            detail: c.decisionNote || c.overrideReason || 'Consultant decision recorded (demo)',
+            detail: c.decisionNote || c.overrideReason || 'Consultant decision recorded',
           },
         ],
       })
@@ -263,11 +263,11 @@ function reducer(state: DemoSnapshot, action: Action): DemoSnapshot {
               time: nowTime(),
               actor: 'TravelXen',
               label: `Ticketing verified · ${option?.flight ?? 'reissue'} · PNR TXN84K2`,
-              detail: 'Demo data — no live GDS/NDC call',
+              detail: 'No live GDS/NDC call',
             },
           ],
         }),
-        'Booking outcome verified (demo PNR TXN84K2)',
+        'Booking outcome verified · PNR TXN84K2',
       )
     }
     case 'verify-message': {
@@ -289,7 +289,7 @@ function reducer(state: DemoSnapshot, action: Action): DemoSnapshot {
               time: nowTime(),
               actor: 'Alex Morgan',
               label: 'WhatsApp update sent after verification',
-              detail: 'Message released only after ticketing confirmed (demo)',
+              detail: 'Message released only after ticketing confirmed',
             },
           ],
         }),
@@ -377,7 +377,7 @@ function reducer(state: DemoSnapshot, action: Action): DemoSnapshot {
                 time: nowTime(),
                 actor: 'Quality',
                 label: 'Resolution captured as a learning signal',
-                detail: 'Playbook candidate queued (demo)',
+                detail: 'Playbook candidate queued',
               },
             ],
           }),
@@ -405,7 +405,7 @@ function reducer(state: DemoSnapshot, action: Action): DemoSnapshot {
               time: nowTime(),
               actor: 'TravelXen',
               label: 'Inventory snapshot refreshed',
-              detail: 'UA 15 Polaris still 1 seat · freshness 1 min · demo data',
+              detail: 'UA 15 Polaris still 1 seat · freshness 1 min',
             },
           ],
         }),
@@ -430,7 +430,7 @@ function reducer(state: DemoSnapshot, action: Action): DemoSnapshot {
               time: nowTime(),
               actor: 'Alex Morgan',
               label: 'VAT invoice sent from stored PNR',
-              detail: 'No booking change · demo data',
+              detail: 'No booking change',
             },
           ],
         }),

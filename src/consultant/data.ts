@@ -169,7 +169,7 @@ function mayaCase(): ServiceCase {
       'Send WhatsApp only after ticketing verifies',
     ],
     resolvedByAva: false,
-    genesysQueue: 'Genesys · WhatsApp · Skill: Disruption-Rebook · demo data',
+    genesysQueue: 'Genesys · WhatsApp · Skill: Disruption-Rebook',
     nextBestActions: [
       {
         id: 'nba-ava-maya',
@@ -197,7 +197,7 @@ function mayaCase(): ServiceCase {
       },
     ],
     timeline: [
-      { id: 't1', time: '06:40', actor: 'Carrier', label: 'BA 832 departed LHR late', detail: 'ATC slot · demo data' },
+      { id: 't1', time: '06:40', actor: 'Carrier', label: 'BA 832 departed LHR late', detail: 'ATC slot' },
       { id: 't2', time: '09:52', actor: 'TravelXen', label: 'Disruption watch opened', detail: 'Connection risk flagged at DUB' },
       { id: 't3', time: '10:18', actor: 'Ava', label: 'Proactive WhatsApp sent', detail: 'Offered self-serve rebook; Maya replied' },
       { id: 't4', time: '11:44', actor: 'Airport', label: 'EI 154 departed without Maya', detail: 'Gate closed 11:28' },
@@ -214,7 +214,7 @@ function mayaCase(): ServiceCase {
     messagePreview: {
       channel: 'whatsapp',
       to: 'Maya Patel · +44 7700 900184',
-      body: 'Maya — you’re confirmed on EI 60, DUB–JFK, 16:15–18:55 in Business. Boarding from T2, original fare protected, no extra cost. I’ll send the boarding pass as soon as ticketing verifies. — Alex, Navan consultant (demo)',
+      body: 'Maya — you’re confirmed on EI 60, DUB–JFK, 16:15–18:55 in Business. Boarding from T2, original fare protected, no extra cost. I’ll send the boarding pass as soon as ticketing verifies. — Alex, Navan consultant',
     },
   }
 }
@@ -276,7 +276,7 @@ function danielCase(): ServiceCase {
       'Hold the live call until snapshot is current',
     ],
     resolvedByAva: false,
-    genesysQueue: 'Genesys · Voice · Skill: Disruption-Triage · demo data',
+    genesysQueue: 'Genesys · Voice · Skill: Disruption-Triage',
     nextBestActions: [
       {
         id: 'nba-d1',
@@ -286,7 +286,7 @@ function danielCase(): ServiceCase {
       },
     ],
     timeline: [
-      { id: 'td1', time: '07:02', actor: 'United', label: 'UA 918 cancelled', detail: 'Crew legality · demo data' },
+      { id: 'td1', time: '07:02', actor: 'United', label: 'UA 918 cancelled', detail: 'Crew legality' },
       { id: 'td2', time: '07:06', actor: 'Genesys', label: 'Inbound call queued', detail: 'IVR intent: cancellation' },
     ],
     transcript: [
@@ -323,7 +323,7 @@ function danielCase(): ServiceCase {
     messagePreview: {
       channel: 'phone',
       to: 'Daniel Kim · +1 415 555 0142',
-      body: 'Daniel — holding UA 15 Polaris SFO–EWR 11:05, arriving 19:42. I’ll confirm once inventory freshness is current. (demo)',
+      body: 'Daniel — holding UA 15 Polaris SFO–EWR 11:05, arriving 19:42. I’ll confirm once inventory freshness is current.',
     },
   }
 }
@@ -384,7 +384,7 @@ function oliviaCase(): ServiceCase {
       'Close chat without a consultant',
     ],
     resolvedByAva: false,
-    genesysQueue: 'Genesys · Web chat · Skill: Servicing · demo data',
+    genesysQueue: 'Genesys · Web chat · Skill: Servicing',
     nextBestActions: [
       {
         id: 'nba-o1',
@@ -402,7 +402,7 @@ function oliviaCase(): ServiceCase {
     messagePreview: {
       channel: 'chat',
       to: 'Olivia Stone',
-      body: 'Seat 34D confirmed on BA 112. (demo)',
+      body: 'Seat 34D confirmed on BA 112.',
     },
   }
 }
@@ -463,7 +463,7 @@ function arjunCase(): ServiceCase {
       'No booking change',
     ],
     resolvedByAva: false,
-    genesysQueue: 'Genesys · Email · Skill: Servicing-Billing · demo data',
+    genesysQueue: 'Genesys · Email · Skill: Servicing-Billing',
     nextBestActions: [
       {
         id: 'nba-a1',
@@ -478,7 +478,7 @@ function arjunCase(): ServiceCase {
     messagePreview: {
       channel: 'email',
       to: 'Arjun Mehta · arjun.mehta@helios-capital.example',
-      body: 'VAT invoice attached for AI 131 / PNR AJBOM44. (demo)',
+      body: 'VAT invoice attached for AI 131 / PNR AJBOM44.',
     },
   }
 }
@@ -536,7 +536,7 @@ function sofiaCase(): ServiceCase {
     avaOutcome: 'Specialist review — Ava must not give immigration advice',
     avaPlan: [],
     resolvedByAva: false,
-    genesysQueue: 'Genesys · Voice · Skill: Documents-Specialist · demo data',
+    genesysQueue: 'Genesys · Voice · Skill: Documents-Specialist',
     nextBestActions: [
       {
         id: 'nba-s1',
@@ -554,7 +554,7 @@ function sofiaCase(): ServiceCase {
     messagePreview: {
       channel: 'phone',
       to: 'Sofia Rossi',
-      body: 'A documentation specialist will call you back within 10 minutes. Your AZ 610 booking is unchanged. (demo)',
+      body: 'A documentation specialist will call you back within 10 minutes. Your AZ 610 booking is unchanged.',
     },
   }
 }
@@ -616,7 +616,7 @@ function lucaCase(): ServiceCase {
       'Email the updated itinerary',
     ],
     resolvedByAva: false,
-    genesysQueue: 'Genesys · Email · Skill: Servicing-Schedule · demo data',
+    genesysQueue: 'Genesys · Email · Skill: Servicing-Schedule',
     nextBestActions: [
       {
         id: 'nba-l1',
@@ -626,7 +626,7 @@ function lucaCase(): ServiceCase {
       },
     ],
     timeline: [
-      { id: 'tl1', time: '06:44', actor: 'Aer Lingus', label: 'EI 520 retimed +40 min', detail: 'Same aircraft · demo data' },
+      { id: 'tl1', time: '06:44', actor: 'Aer Lingus', label: 'EI 520 retimed +40 min', detail: 'Same aircraft' },
       { id: 'tl2', time: '06:51', actor: 'Ava', label: 'Schedule-change offer drafted', detail: 'In policy · meeting still holds' },
     ],
     transcript: [
@@ -637,7 +637,7 @@ function lucaCase(): ServiceCase {
     messagePreview: {
       channel: 'email',
       to: 'Luca Bianchi · luca.bianchi@meridian-analytics.example',
-      body: 'EI 520 now departs MXP 08:05, arrives DUB 09:55. Original PNR LB520EI unchanged. (demo)',
+      body: 'EI 520 now departs MXP 08:05, arrives DUB 09:55. Original PNR LB520EI unchanged.',
     },
   }
 }
@@ -768,7 +768,7 @@ function jordanCase(): ServiceCase {
       'File under airline waiver · $0 · message only after ticketing verifies',
     ],
     resolvedByAva: false,
-    genesysQueue: 'Genesys · WhatsApp · Skill: Disruption-Rebook · Ava · demo data',
+    genesysQueue: 'Genesys · WhatsApp · Skill: Disruption-Rebook · Ava',
     nextBestActions: [
       {
         id: 'nba-j1',
@@ -778,7 +778,7 @@ function jordanCase(): ServiceCase {
       },
     ],
     timeline: [
-      { id: 'tj1', time: '11:05', actor: 'Carrier', label: 'BA 117 delayed +2h 10m', detail: 'New JFK ETA 16:15 · demo data' },
+      { id: 'tj1', time: '11:05', actor: 'Carrier', label: 'BA 117 delayed +2h 10m', detail: 'New JFK ETA 16:15' },
       { id: 'tj2', time: '12:14', actor: 'GDS', label: 'AA 198 connection broken', detail: 'MCT at JFK will not hold' },
       { id: 'tj3', time: '12:16', actor: 'Ava', label: 'Read ticket, eligibility, waiver, freshness', detail: 'Issued · confirmed · available · 2 min ago' },
       { id: 'tj4', time: '12:17', actor: 'Ava', label: 'AA 177 held under waiver', detail: 'Same fare family · $0' },
@@ -792,7 +792,7 @@ function jordanCase(): ServiceCase {
     messagePreview: {
       channel: 'whatsapp',
       to: 'Jordan Hale · +1 415 555 0198',
-      body: 'Jordan — you’re on AA 177 JFK–SFO 19:25–22:52 in Business. BA 117 still flies (delayed). Original ticket protected, $0 under the airline waiver. Boarding pass follows when ticketing verifies. — Ava (demo)',
+      body: 'Jordan — you’re on AA 177 JFK–SFO 19:25–22:52 in Business. BA 117 still flies (delayed). Original ticket protected, $0 under the airline waiver. Boarding pass follows when ticketing verifies. — Ava',
     },
     gdsFacts: [
       { id: 'ba117', label: 'BA117', value: 'Delayed +2h 10m', tone: 'alert' },

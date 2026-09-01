@@ -12,7 +12,7 @@ export function DeskCopilot({ c, embedded = false }: { c: ServiceCase; embedded?
           <div className="text-sm font-medium">{brief.headline}</div>
         </div>
         <span className="chip bg-purple-soft text-purple">
-          <Languages size={11} className="mr-1" /> Plain language · demo data
+          <Languages size={11} className="mr-1" /> Plain language
         </span>
       </div>
       <div className="grid gap-0 md:grid-cols-2">
