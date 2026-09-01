@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import {
   Bot,
   Check,
@@ -18,7 +18,7 @@ import { ChannelLabel, PriorityChip } from './ui'
 import { AgentWorkStrip } from './AgentActivity'
 import { AvaGdsFlow } from './AvaGdsFlow'
 import { DeskCopilot } from './DeskCopilot'
-import type { Channel, FlightSegment, RebookOption, ServiceCase } from './types'
+import type { FlightSegment, RebookOption, ServiceCase } from './types'
 
 type TripTab = 'flights' | 'hotels' | 'cars'
 type ChatTab = 'chat' | 'phone' | 'email'
@@ -69,7 +69,6 @@ export function ConsultantWorkspace() {
     <div className="grid min-h-[calc(100vh-56px)] bg-canvas xl:grid-cols-[268px_minmax(0,1fr)_352px]">
       <TravelerRail c={active} cases={filtered} />
       <div className="min-w-0 overflow-y-auto border-x border-line">
-        <LastActionStrip c={active} />
         <AgentWorkStrip
           c={active}
           onOpen={() => {
@@ -95,17 +94,26 @@ export function ConsultantWorkspace() {
   )
 }
 
+function keepSelectedTrip(
+  c: ServiceCase,
+  interactions: { id: string; caseId: string }[],
+  dispatch: ReturnType<typeof useDemo>['dispatch'],
+) {
+  const i = interactions.find((x) => x.caseId === c.id)
+  if (i) dispatch({ type: 'select-interaction', id: i.id })
+  dispatch({ type: 'select-case', id: c.id })
+}
+
 function TravelerRail({ c, cases }: { c: ServiceCase; cases: ServiceCase[] }) {
-  const { dispatch } = useDemo()
-  const navigate = useNavigate()
+  const { dispatch, interactions } = useDemo()
   const owner = deskOwner(c)
   const initials = c.traveller
     .split(' ')
     .map((p) => p[0])
     .join('')
   return (
-    <aside className="hidden min-h-0 bg-white xl:flex xl:flex-col">
-      <div className="min-h-0 flex-1 overflow-y-auto">
+    <aside className="hidden bg-canvas p-3 xl:block">
+      <div className="card overflow-hidden">
         <div className="border-b border-line px-4 py-3">
           <div className="text-[10px] font-medium tracking-[0.14em] text-muted uppercase">Open trips</div>
           <div className="mt-2 flex flex-wrap gap-1">
@@ -113,7 +121,7 @@ function TravelerRail({ c, cases }: { c: ServiceCase; cases: ServiceCase[] }) {
               <button
                 key={item.id}
                 type="button"
-                onClick={() => dispatch({ type: 'select-case', id: item.id })}
+                onClick={() => keepSelectedTrip(item, interactions, dispatch)}
                 className={`rounded-full px-2.5 py-1 text-[11px] font-medium ${
                   item.id === c.id ? 'bg-ink text-white' : item.gdsFacts?.length ? 'bg-purple-soft text-purple' : 'bg-canvas text-muted'
                 }`}
@@ -123,9 +131,9 @@ function TravelerRail({ c, cases }: { c: ServiceCase; cases: ServiceCase[] }) {
             ))}
           </div>
         </div>
-        <div className="px-4 py-5">
+        <div className="px-4 py-4">
           <div className="flex items-start gap-3">
-            <div className="grid h-12 w-12 shrink-0 place-items-center rounded-full bg-purple text-sm font-medium text-white">
+            <div className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-purple text-sm font-medium text-white">
               {initials}
             </div>
             <div className="min-w-0">
@@ -133,33 +141,22 @@ function TravelerRail({ c, cases }: { c: ServiceCase; cases: ServiceCase[] }) {
                 <h1 className="text-base font-medium tracking-tight">{c.traveller}</h1>
                 <PriorityChip value={c.urgency} />
               </div>
-              <p className="mt-0.5 text-[12px] text-muted">{c.trip}</p>
+              <p className="mt-0.5 text-[12px] text-muted">{c.company}</p>
             </div>
           </div>
-          <dl className="mt-4 space-y-2.5 text-[13px]">
+          <dl className="mt-4 space-y-2 text-[13px]">
+            <RailFact label="Case" value={c.caseNumber} />
             <RailFact label="PNR" value={c.newPnr ? `${c.pnr} → ${c.newPnr}` : c.pnr} />
-            <RailFact label="Urgency" value={urgencyWord(c.urgency)} />
             <RailFact label="Owner" value={owner.label} />
           </dl>
         </div>
-        <div className="mx-4 mb-4 rounded-xl border border-line bg-canvas px-3 py-3">
-          <div className="text-[10px] font-medium tracking-[0.14em] text-muted uppercase">Who is working</div>
-          <p className="mt-1 text-[13px] font-medium leading-snug">{owner.headline}</p>
+        <div className="border-t border-line bg-canvas/70 px-4 py-3">
+          <p className="text-[13px] font-medium leading-snug">{owner.headline}</p>
           <p className="mt-1 text-[12px] leading-snug text-muted">{owner.detail}</p>
+          <Link to="/context" className="btn btn-primary mt-3 w-full" onClick={() => keepSelectedTrip(c, interactions, dispatch)}>
+            <Layers size={14} /> Open shared context
+          </Link>
         </div>
-      </div>
-      <div className="border-t border-line p-4">
-        <button
-          type="button"
-          className="btn btn-primary w-full"
-          onClick={() => {
-            dispatch({ type: 'select-case', id: c.id })
-            navigate('/context')
-          }}
-        >
-          <Layers size={14} /> Open shared context
-        </button>
-        <p className="mt-2 text-[11px] text-muted">Policy, flights, and supplier status live there — not on this rail.</p>
       </div>
     </aside>
   )
@@ -212,25 +209,8 @@ function deskOwner(c: ServiceCase) {
   }
 }
 
-function urgencyWord(value: ServiceCase['urgency']) {
-  return value.charAt(0).toUpperCase() + value.slice(1)
-}
-
-function LastActionStrip({ c }: { c: ServiceCase }) {
-  return (
-    <div className="flex flex-wrap items-center justify-between gap-2 border-b border-line bg-purple-soft/60 px-4 py-2.5 md:px-5">
-      <p className="text-[12px] text-ink">
-        <span className="font-medium">Last traveler action · </span>
-        {lastTravelerAction(c)}
-      </p>
-      <span className="chip bg-white text-purple">Same-agent routing if they return today</span>
-    </div>
-  )
-}
-
 function TripChrome({ c, tab, onTab }: { c: ServiceCase; tab: TripTab; onTab: (t: TripTab) => void }) {
-  const { dispatch } = useDemo()
-  const navigate = useNavigate()
+  const { dispatch, interactions } = useDemo()
   const owner = deskOwner(c)
   const initials = c.traveller
     .split(' ')
@@ -243,20 +223,13 @@ function TripChrome({ c, tab, onTab }: { c: ServiceCase; tab: TripTab; onTab: (t
         <div className="min-w-0 flex-1">
           <div className="text-sm font-medium">{c.traveller}</div>
           <div className="truncate text-[12px] text-muted">
-            {c.trip} · PNR {c.pnr} · {owner.label}
+            {c.company} · {c.caseNumber} · PNR {c.pnr} · {owner.label}
           </div>
         </div>
         <PriorityChip value={c.urgency} />
-        <button
-          type="button"
-          className="btn btn-ghost text-xs"
-          onClick={() => {
-            dispatch({ type: 'select-case', id: c.id })
-            navigate('/context')
-          }}
-        >
+        <Link to="/context" className="btn btn-ghost text-xs" onClick={() => keepSelectedTrip(c, interactions, dispatch)}>
           <Layers size={13} /> Open shared context
-        </button>
+        </Link>
       </div>
       <p className="mt-2 text-[12px] text-muted xl:hidden">
         {owner.headline} {owner.detail}
@@ -1042,31 +1015,6 @@ function Composer({ c, onSend }: { c: ServiceCase; onSend: () => void }) {
       </div>
     </div>
   )
-}
-
-function lastTravelerAction(c: ServiceCase) {
-  const channelLabel: Record<Channel, string> = {
-    whatsapp: 'WhatsApp',
-    phone: 'phone',
-    chat: 'in-app chat',
-    email: 'email',
-  }
-  if (c.workflow === 'rebook') {
-    return `Tried Ava self-serve rebook on ${channelLabel[c.channel]} after a missed connection, then asked for a person.`
-  }
-  if (c.gdsFacts?.length) {
-    return `Opened ${channelLabel[c.channel]} after BA 117 delay. Ava is reading GDS: ticket issued, eligibility confirmed, waiver available.`
-  }
-  if (c.workflow === 'triage') {
-    return `Opened ${channelLabel[c.channel]} after a cancellation. Inventory was stale, so Ava held the case.`
-  }
-  if (c.workflow === 'ava_contained') {
-    return `Started ${channelLabel[c.channel]} with Ava. Still in self-serve — do not take over.`
-  }
-  if (c.workflow === 'servicing') {
-    return `Requested a VAT invoice from ${channelLabel[c.channel]}. No itinerary change.`
-  }
-  return `Raised a document question on ${channelLabel[c.channel]}. Last booking action did not include visa checks.`
 }
 
 function airlineCode(airline: string) {

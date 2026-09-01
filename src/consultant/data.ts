@@ -1,10 +1,9 @@
 import type { DemoSnapshot, LearningSignal, ServiceCase, Interaction } from './types'
 
-const demo = (system: string, capturedAt: string, freshness: string) => ({
+const sourceOf = (system: string, capturedAt: string, freshness: string) => ({
   system,
   capturedAt,
   freshness,
-  demo: true as const,
 })
 
 const mayaOptions = [
@@ -28,19 +27,19 @@ const mayaOptions = [
         id: 'e1',
         label: 'Inventory',
         value: '2 J seats, last ping 07:14',
-        source: demo('TravelXen inventory', '07:14', '4 min ago'),
+        source: sourceOf('TravelXen inventory', '07:14', '4 min ago'),
       },
       {
         id: 'e2',
         label: 'Policy',
         value: 'Flex Business same-day reissue, no residual',
-        source: demo('TravelXen policy', '07:11', '7 min ago'),
+        source: sourceOf('TravelXen policy', '07:11', '7 min ago'),
       },
       {
         id: 'e3',
         label: 'Constraint',
         value: 'Arrives before 19:30 ET client meeting',
-        source: demo('Calendar + case note', '07:09', '9 min ago'),
+        source: sourceOf('Calendar + case note', '07:09', '9 min ago'),
       },
     ],
     notes: 'Ava already confirmed Maya will accept a 3h hold if she lands before 19:00 ET.',
@@ -64,13 +63,13 @@ const mayaOptions = [
         id: 'e4',
         label: 'Inventory',
         value: '4 J seats, last ping 07:14',
-        source: demo('TravelXen inventory', '07:14', '4 min ago'),
+        source: sourceOf('TravelXen inventory', '07:14', '4 min ago'),
       },
       {
         id: 'e5',
         label: 'Policy',
         value: 'Partner reissue allowed; residual €86 vs €150 cap',
-        source: demo('TravelXen policy', '07:11', '7 min ago'),
+        source: sourceOf('TravelXen policy', '07:11', '7 min ago'),
       },
     ],
     notes: 'Use only if EI 60 inventory drops or Maya declines the wait.',
@@ -94,7 +93,7 @@ const mayaOptions = [
         id: 'e6',
         label: 'Duty of care',
         value: 'Clayton Hotel Dublin Airport, prepaid hold until 18:00',
-        source: demo('TravelXen hotels', '07:12', '6 min ago'),
+        source: sourceOf('TravelXen hotels', '07:12', '6 min ago'),
       },
     ],
     notes: 'Fallback if same-day inventory fails at ticketing.',
@@ -314,7 +313,7 @@ function danielCase(): ServiceCase {
             id: 'ed1',
             label: 'Inventory',
             value: '1 P seat, stale 11 min',
-            source: demo('TravelXen inventory', '07:07', '11 min ago'),
+            source: sourceOf('TravelXen inventory', '07:07', '11 min ago'),
           },
         ],
         notes: 'Do not ticket until snapshot freshness is under 5 minutes.',
@@ -663,13 +662,13 @@ const jordanOptions = [
         id: 'je1',
         label: 'Inventory',
         value: '3 J seats, last ping 12:16',
-        source: demo('TravelXen inventory', '12:16', '2 min ago'),
+        source: sourceOf('TravelXen inventory', '12:16', '2 min ago'),
       },
       {
         id: 'je2',
         label: 'Waiver',
         value: 'Airline involuntary waiver available',
-        source: demo('GDS / BA-AA', '12:16', '2 min ago'),
+        source: sourceOf('GDS / BA-AA', '12:16', '2 min ago'),
       },
     ],
     notes: 'Ava can reissue on the already-issued ticket. No consultant GDS.',
@@ -693,7 +692,7 @@ const jordanOptions = [
         id: 'je3',
         label: 'Inventory',
         value: '5 J seats, last ping 12:16',
-        source: demo('TravelXen inventory', '12:16', '2 min ago'),
+        source: sourceOf('TravelXen inventory', '12:16', '2 min ago'),
       },
     ],
     notes: 'Fallback if AA 177 drops at ticketing.',

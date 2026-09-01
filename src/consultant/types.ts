@@ -28,7 +28,6 @@ export interface SourceLabel {
   system: string
   capturedAt: string
   freshness: string
-  demo?: boolean
 }
 
 export interface TimelineItem {

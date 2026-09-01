@@ -1,8 +1,8 @@
 import { useNavigate } from 'react-router-dom'
 import { Workflow } from 'lucide-react'
 import { useDemo } from './store'
-import { ChannelLabel, PriorityChip, SourceTag } from './ui'
-import type { FlightSegment, Interaction, Sentiment, ServiceCase, SupervisorRoute } from './types'
+import { ChannelLabel, PriorityChip } from './ui'
+import type { Channel, FlightSegment, Interaction, Sentiment, ServiceCase, SupervisorRoute } from './types'
 
 const FEATURED = ['int-jordan', 'int-maya', 'int-daniel'] as const
 
@@ -120,7 +120,6 @@ function TravellerCard({ c, item }: { c: ServiceCase; item: Interaction }) {
     <section className="card p-4">
       <div className="mb-3 flex items-center justify-between gap-2">
         <h2 className="text-sm font-semibold">Traveller</h2>
-        <SourceTag system="Profile" freshness="live" />
       </div>
       <div className="text-base font-medium">{c.traveller}</div>
       <p className="mt-1 text-sm text-muted">
@@ -138,8 +137,10 @@ function TravellerCard({ c, item }: { c: ServiceCase; item: Interaction }) {
       <dl className="mt-4 grid gap-2 text-sm sm:grid-cols-2">
         <Fact label="Loyalty" value={c.loyalty} />
         <Fact label="Where now" value={c.locationNow} />
+        <Fact label="Payment on file" value={cardOnFile(c)} />
         <Fact label="Phone" value={c.phone} />
         <Fact label="Email" value={c.email} />
+        <Fact label="Last traveler action" value={lastTravelerAction(c)} />
       </dl>
     </section>
   )
@@ -150,7 +151,6 @@ function TripCard({ c }: { c: ServiceCase }) {
     <section className="card p-4">
       <div className="mb-3 flex items-center justify-between gap-2">
         <h2 className="text-sm font-semibold">Trip / PNR / flights</h2>
-        <SourceTag system="PNR" freshness="live" />
       </div>
       <div className="text-sm font-medium">{c.trip}</div>
       <p className="mt-1 text-[13px] text-muted">{c.originBooking}</p>
@@ -181,7 +181,6 @@ function PolicyCard({ c }: { c: ServiceCase }) {
     <section className="card p-4">
       <div className="mb-3 flex items-center justify-between gap-2">
         <h2 className="text-sm font-semibold">Policy</h2>
-        <SourceTag system="Policy" freshness="live" />
       </div>
       <p className="text-sm font-medium">{c.policy}</p>
       <div className="mt-3 flex flex-wrap gap-1.5">
@@ -201,7 +200,6 @@ function AvaHandoffCard({ c, item }: { c: ServiceCase; item: Interaction }) {
     <section className="card p-4">
       <div className="mb-3 flex items-center justify-between gap-2">
         <h2 className="text-sm font-semibold">Ava handoff</h2>
-        <SourceTag system="Ava" freshness="session" />
       </div>
       <p className="text-sm font-medium">{c.avaOutcome}</p>
       <p className="mt-2 text-[13px] text-muted">{toPerson ? item.supervisor.reason : 'Ava can finish this without a consultant handle.'}</p>
@@ -224,7 +222,7 @@ function SupplierCard({ c }: { c: ServiceCase }) {
     <section className="card p-4">
       <div className="mb-3 flex items-center justify-between gap-2">
         <h2 className="text-sm font-semibold">Supplier status</h2>
-        <SourceTag system="GDS / airline" freshness={c.inventoryFresh ? '2 min' : '11 min'} />
+        <span className="text-[11px] text-muted">{c.inventoryFresh ? 'Updated 2 min ago' : 'Stale · 11 min'}</span>
       </div>
       <div className="grid gap-2 sm:grid-cols-3">
         <StatusTile
@@ -261,7 +259,6 @@ function IntentRoutingCard({ c, item }: { c: ServiceCase; item: Interaction }) {
     <section className="card p-4">
       <div className="mb-3 flex items-center justify-between gap-2">
         <h2 className="text-sm font-semibold">Intent + routing</h2>
-        <SourceTag system="Intake agents" freshness="decided" />
       </div>
       <p className="text-sm font-medium">{c.intent}</p>
       <p className="mt-1 text-[13px] text-muted">{item.routing}</p>
@@ -304,6 +301,35 @@ function Fact({ label, value }: { label: string; value: string }) {
       <dd className="mt-0.5">{value}</dd>
     </div>
   )
+}
+
+function lastTravelerAction(c: ServiceCase) {
+  const channelLabel: Record<Channel, string> = {
+    whatsapp: 'WhatsApp',
+    phone: 'phone',
+    chat: 'in-app chat',
+    email: 'email',
+  }
+  if (c.workflow === 'rebook') {
+    return `Tried Ava self-serve rebook on ${channelLabel[c.channel]} after a missed connection, then asked for a person.`
+  }
+  if (c.gdsFacts?.length) {
+    return `Opened ${channelLabel[c.channel]} after BA 117 delay. Ava is reading GDS: ticket issued, eligibility confirmed, waiver available.`
+  }
+  if (c.workflow === 'triage') {
+    return `Opened ${channelLabel[c.channel]} after a cancellation. Inventory was stale, so Ava held the case.`
+  }
+  if (c.workflow === 'ava_contained') {
+    return `Started ${channelLabel[c.channel]} with Ava. Still in self-serve — do not take over.`
+  }
+  if (c.workflow === 'servicing') {
+    return `Requested a VAT invoice from ${channelLabel[c.channel]}. No itinerary change.`
+  }
+  return `Raised a document question on ${channelLabel[c.channel]}. Last booking action did not include visa checks.`
+}
+
+function cardOnFile(c: ServiceCase) {
+  return `${c.company.split(' ')[0]} virtual card · Visa ••${c.caseNumber.replace(/\D/g, '').slice(-4) || '1842'}`
 }
 
 function StatusTile({ label, value, ok }: { label: string; value: string; ok: boolean }) {

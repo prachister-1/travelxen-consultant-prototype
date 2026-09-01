@@ -60,15 +60,13 @@ export function Confidence({ value }: { value: number }) {
 
 export function SourceTag({
   system,
-  freshness,
 }: {
   system: string
-  freshness: string
+  freshness?: string
 }) {
   return (
-    <span className="inline-flex items-center gap-1 rounded-md bg-canvas px-1.5 py-0.5 text-[10px] font-medium tracking-wide text-muted uppercase">
+    <span className="inline-flex items-center rounded-md bg-canvas px-1.5 py-0.5 text-[10px] font-medium tracking-wide text-muted uppercase">
       {system}
-      <span className="normal-case tracking-normal text-ink/70">· {freshness}</span>
     </span>
   )
 }
