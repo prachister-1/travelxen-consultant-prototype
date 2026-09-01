@@ -117,7 +117,7 @@ export function ConsultantShell() {
                   <li>Inbox — pick Jordan Hale (Ava tickets), Maya Patel (you confirm), or Daniel Kim (do not ticket yet).</li>
                   <li>Shared context — everything on this trip in one place.</li>
                   <li>Agents — Copilot helps you. Ava tickets when it is safe.</li>
-                  <li>Resolution hub — what happened, what we learned, what Ava does next time.</li>
+                  <li>Resolution hub — what done means, the trace, and whether Ava can ticket next time.</li>
                 </ol>
               </div>
             ) : null}
