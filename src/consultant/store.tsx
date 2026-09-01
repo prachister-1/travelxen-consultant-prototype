@@ -18,6 +18,7 @@ type Action =
   | { type: 'verify-booking'; caseId: string }
   | { type: 'verify-message'; caseId: string }
   | { type: 'capture-learning'; caseId: string }
+  | { type: 'update-ava'; caseId: string; letAva: boolean }
   | { type: 'refresh-inventory'; caseId: string }
   | { type: 'leave-with-ava'; caseId: string }
   | { type: 'ava-complete'; caseId: string }
@@ -27,6 +28,25 @@ type Action =
 
 function nowTime() {
   return new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false })
+}
+
+function avaPlaybookImpact(c: ServiceCase, letAva: boolean) {
+  if (c.gdsFacts?.length) {
+    return letAva
+      ? 'Issued ticket + waiver + supplier under 5 min → Ava reissues. Consultant does not open GDS.'
+      : 'Keep a person on waiver reissues like this one.'
+  }
+  if (c.id === 'case-maya') {
+    return letAva
+      ? 'Let Ava ticket same-fare-family misconnects after a person attests the calendar constraint.'
+      : 'A person still confirms the meeting time. Then Ava tickets.'
+  }
+  if (c.id === 'case-daniel') {
+    return letAva
+      ? 'Ava tickets after inventory is fresh. Hard-stop when seats are older than 5 minutes.'
+      : 'A person must confirm seats are fresh. Then Ava can ticket.'
+  }
+  return letAva ? 'Let Ava handle the next trip like this.' : 'Keep a person on this.'
 }
 
 function avaBlockedReason(c: ServiceCase): string | null {
@@ -388,6 +408,18 @@ function reducer(state: DemoSnapshot, action: Action): DemoSnapshot {
           interactions: state.interactions.map((i) => (i.caseId === action.caseId ? { ...i, state: 'resolved' } : i)),
         },
         'Learning signal captured — open in Resolution hub',
+      )
+    }
+    case 'update-ava': {
+      const c = state.cases.find((x) => x.id === action.caseId)
+      if (!c) return state
+      const playbookImpact = avaPlaybookImpact(c, action.letAva)
+      const signals = state.signals.map((s) =>
+        s.caseNumber === c.caseNumber || s.id === `sig-${c.id}` ? { ...s, playbookImpact } : s,
+      )
+      return addToast(
+        { ...state, signals },
+        action.letAva ? 'Ava will handle this next time' : 'A person stays on this',
       )
     }
     case 'refresh-inventory': {
