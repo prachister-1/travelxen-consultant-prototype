@@ -18,9 +18,13 @@ export interface HelperDef {
   id: HelperId
   name: string
   simple: string
-  owner: 'Ava' | 'TravelXen' | 'Quality'
+  owner: 'Copilot'
   job: string
   speeds: string
+}
+
+export function helperOwnerLabel() {
+  return 'Copilot · TravelXen'
 }
 
 export interface AgentAssignment {
@@ -44,7 +48,7 @@ export const HELPERS: HelperDef[] = [
     id: 'intent',
     name: 'Intent classification',
     simple: 'Names what they want',
-    owner: 'TravelXen',
+    owner: 'Copilot',
     job: 'Reads the message and names the request: missed connection, delay, seat, invoice, visa, or schedule change.',
     speeds: 'The queue and the trip open with the right intent already filled.',
   },
@@ -52,7 +56,7 @@ export const HELPERS: HelperDef[] = [
     id: 'routing',
     name: 'Smart routing',
     simple: 'Picks who handles it',
-    owner: 'TravelXen',
+    owner: 'Copilot',
     job: 'Sends the trip to Ava, to you, or to a documents specialist. It uses intent, how hard it is, and how the traveller feels.',
     speeds: 'You only see trips that need a person.',
   },
@@ -60,7 +64,7 @@ export const HELPERS: HelperDef[] = [
     id: 'knowledge',
     name: 'Knowledge',
     simple: 'Looks up the known rule',
-    owner: 'TravelXen',
+    owner: 'Copilot',
     job: 'Finds a matching rule from past trips: Ava can ticket, you must confirm one thing, or do not ticket yet.',
     speeds: 'The team does not start from a blank page on a miss-connect.',
   },
@@ -68,7 +72,7 @@ export const HELPERS: HelperDef[] = [
     id: 'summariser',
     name: 'PNR summariser',
     simple: 'Explains the booking',
-    owner: 'Ava',
+    owner: 'Copilot',
     job: 'Reads the PNR and the traveller’s message, then tells you what is broken in plain English — delay, missed connection, or a simple request.',
     speeds: 'You can read the trip without opening GDS.',
   },
@@ -76,7 +80,7 @@ export const HELPERS: HelperDef[] = [
     id: 'calendar',
     name: 'Constraint watch',
     simple: 'Finds the meeting time',
-    owner: 'TravelXen',
+    owner: 'Copilot',
     job: 'Finds if the traveller must land before a meeting, dinner, or board. You use this to pick a flight that still works.',
     speeds: 'You confirm one time instead of rebuilding the trip from chat.',
   },
@@ -84,7 +88,7 @@ export const HELPERS: HelperDef[] = [
     id: 'inventory',
     name: 'Inventory scout',
     simple: 'Checks the seats',
-    owner: 'TravelXen',
+    owner: 'Copilot',
     job: 'Looks up whether the new flight still has seats, and how old that check is. If it is older than 5 minutes, do not ticket.',
     speeds: 'Stops a promise on a seat that may already be gone.',
   },
@@ -92,7 +96,7 @@ export const HELPERS: HelperDef[] = [
     id: 'rules',
     name: 'Fare-rule reader',
     simple: 'Reads the ticket rules',
-    owner: 'TravelXen',
+    owner: 'Copilot',
     job: 'Reads the fare, airline waiver, and change cost. Tells you if the new flight is free or if the traveller must pay.',
     speeds: 'The recommended flight is already tagged in-policy.',
   },
@@ -100,7 +104,7 @@ export const HELPERS: HelperDef[] = [
     id: 'policy',
     name: 'Policy checker',
     simple: 'Checks company policy',
-    owner: 'TravelXen',
+    owner: 'Copilot',
     job: 'Checks the company travel policy will pay for this change. Stops a booking that needs a manager.',
     speeds: 'Stops a cost that would need a manager.',
   },
@@ -108,7 +112,7 @@ export const HELPERS: HelperDef[] = [
     id: 'gds',
     name: 'GDS copilot',
     simple: 'Writes the ticket steps',
-    owner: 'Ava',
+    owner: 'Copilot',
     job: 'Prepares the GDS ticket steps. Ava runs them. You never type Sabre or Amadeus.',
     speeds: 'You can finish a reissue without Sabre training.',
   },
@@ -116,7 +120,7 @@ export const HELPERS: HelperDef[] = [
     id: 'draft',
     name: 'Message drafter',
     simple: 'Writes the traveller message',
-    owner: 'Ava',
+    owner: 'Copilot',
     job: 'Drafts the WhatsApp or email. It stays locked until the new ticket is real, so you never promise a seat too early.',
     speeds: 'You do not write a WhatsApp from scratch.',
   },
@@ -124,7 +128,7 @@ export const HELPERS: HelperDef[] = [
     id: 'quality',
     name: 'Quality loop',
     simple: 'Saves this for next time',
-    owner: 'Quality',
+    owner: 'Copilot',
     job: 'After the trip is finished, saves the rule so Ava can ticket the next similar trip without you.',
     speeds: 'Today’s confirm becomes tomorrow’s auto-ticket.',
   },

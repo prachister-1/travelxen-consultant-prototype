@@ -19,7 +19,7 @@ import {
   Workflow,
 } from 'lucide-react'
 import { statusClass } from './AgentActivity'
-import { assignmentsFor, HELPERS, type HelperId, type HelperStatus } from './agentWork'
+import { assignmentsFor, HELPERS, helperOwnerLabel, type HelperId, type HelperStatus } from './agentWork'
 import { useDemo } from './store'
 import type { Interaction, ServiceCase, SupervisorRoute } from './types'
 
@@ -70,7 +70,7 @@ export function AgentOrchestration() {
       <div className="mb-5">
         <h1 className="text-[28px] font-medium tracking-tight">Who is helping you</h1>
         <p className="mt-1 text-sm text-muted">
-          AI agents work the booking. You step in only when a person is needed, or when it is not safe to ticket.
+          Ava talks to the traveller and tickets when it is safe. Copilot is TravelXen on your desk — it proposes; you attest when a person is needed.
         </p>
         <p className="mt-2 text-sm text-ink">
           <Link to="/context" className="font-medium text-purple underline-offset-2 hover:underline">
@@ -81,7 +81,7 @@ export function AgentOrchestration() {
 
       <section className="card mb-5 p-4">
         <div className="text-[11px] font-medium tracking-[0.12em] text-muted uppercase">What each AI agent does</div>
-        <p className="mt-1 text-[13px] text-muted">Read this list first. Then pick a trip to see them work.</p>
+        <p className="mt-1 text-[13px] text-muted">Copilot helps you. Ava tickets. Read this list, then pick a trip.</p>
         <div className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
           {LEAD_AGENTS.filter((agent) => agent.id === 'genesys').map((agent) => {
             const Icon = agent.icon
@@ -97,6 +97,7 @@ export function AgentOrchestration() {
                   </div>
                 </div>
                 <p className="mt-2 text-[13px] text-ink">{agent.job}</p>
+                <div className="mt-2 text-[10px] font-medium tracking-[0.12em] text-muted uppercase">Channel</div>
               </div>
             )
           })}
@@ -116,15 +117,16 @@ export function AgentOrchestration() {
                   </div>
                 </div>
                 <p className="mt-2 text-[13px] text-ink">{h.job}</p>
+                <div className="mt-2 text-[10px] font-medium tracking-[0.12em] text-purple uppercase">{helperOwnerLabel()}</div>
               </div>
             )
           })}
           {LEAD_AGENTS.filter((agent) => agent.id === 'ava').map((agent) => {
             const Icon = agent.icon
             return (
-              <div key={agent.id} className="rounded-xl border border-line bg-canvas px-3 py-3">
+              <div key={agent.id} className="rounded-xl border border-teal/30 bg-teal-soft/40 px-3 py-3">
                 <div className="flex items-center gap-2">
-                  <span className="grid h-8 w-8 place-items-center rounded-lg bg-white text-purple">
+                  <span className="grid h-8 w-8 place-items-center rounded-lg bg-white text-teal">
                     <Icon size={14} />
                   </span>
                   <div>
@@ -133,6 +135,7 @@ export function AgentOrchestration() {
                   </div>
                 </div>
                 <p className="mt-2 text-[13px] text-ink">{agent.job}</p>
+                <div className="mt-2 text-[10px] font-medium tracking-[0.12em] text-teal uppercase">Ava · tickets</div>
               </div>
             )
           })}
@@ -237,6 +240,7 @@ export function AgentOrchestration() {
                         <span className="flex flex-wrap items-center gap-2">
                           <span className="text-sm font-medium">{h.simple}</span>
                           <span className="text-[11px] text-muted">{h.name}</span>
+                          <span className="text-[10px] font-medium tracking-[0.12em] text-purple uppercase">{helperOwnerLabel()}</span>
                           <span className={`chip ${statusClass(status)}`}>{statusWord(status, active)}</span>
                         </span>
                         <span className="mt-0.5 block text-[13px] text-ink">{h.job}</span>

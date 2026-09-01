@@ -1,10 +1,10 @@
-import { useState, type ReactNode } from 'react'
+import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
-  AlertTriangle,
   Bot,
   Check,
   FileText,
+  Layers,
   Lock,
   Mail,
   MessageCircle,
@@ -12,22 +12,13 @@ import {
   RefreshCw,
   Send,
   Sparkles,
-  Star,
 } from 'lucide-react'
 import { avaBlockedReason, ESCALATE_REASONS, OVERRIDE_REASONS, useDemo } from './store'
 import { ChannelLabel, PriorityChip } from './ui'
 import { AgentWorkStrip } from './AgentActivity'
 import { AvaGdsFlow } from './AvaGdsFlow'
 import { DeskCopilot } from './DeskCopilot'
-import type { AgentWorkflow, Channel, FlightSegment, RebookOption, ServiceCase } from './types'
-
-const WORKFLOW_LABEL: Record<AgentWorkflow, string> = {
-  rebook: 'Rebook',
-  triage: 'Triage hold',
-  ava_contained: 'Ava owned',
-  servicing: 'Servicing',
-  specialist: 'Specialist',
-}
+import type { Channel, FlightSegment, RebookOption, ServiceCase } from './types'
 
 type TripTab = 'flights' | 'hotels' | 'cars'
 type ChatTab = 'chat' | 'phone' | 'email'
@@ -106,125 +97,123 @@ export function ConsultantWorkspace() {
 
 function TravelerRail({ c, cases }: { c: ServiceCase; cases: ServiceCase[] }) {
   const { dispatch } = useDemo()
+  const navigate = useNavigate()
+  const owner = deskOwner(c)
   const initials = c.traveller
     .split(' ')
     .map((p) => p[0])
     .join('')
   return (
-    <aside className="hidden min-h-0 overflow-y-auto bg-white xl:block">
-      <div className="border-b border-line px-4 py-3">
-        <div className="text-[10px] font-medium tracking-[0.14em] text-muted uppercase">Open trips</div>
-        <div className="mt-2 flex flex-wrap gap-1">
-          {cases.map((item) => (
-            <button
-              key={item.id}
-              type="button"
-              onClick={() => dispatch({ type: 'select-case', id: item.id })}
-              className={`rounded-full px-2.5 py-1 text-[11px] font-medium ${
-                item.id === c.id ? 'bg-ink text-white' : item.gdsFacts?.length ? 'bg-purple-soft text-purple' : 'bg-canvas text-muted'
-              }`}
-            >
-              {item.gdsFacts?.length ? `${item.traveller.split(' ')[0]} · GDS` : item.traveller.split(' ')[0]}
-            </button>
-          ))}
-        </div>
-      </div>
-      <div className="px-4 py-5">
-        <div className="flex items-start gap-3">
-          <div className="grid h-12 w-12 shrink-0 place-items-center rounded-full bg-purple text-sm font-medium text-white">
-            {initials}
+    <aside className="hidden min-h-0 bg-white xl:flex xl:flex-col">
+      <div className="min-h-0 flex-1 overflow-y-auto">
+        <div className="border-b border-line px-4 py-3">
+          <div className="text-[10px] font-medium tracking-[0.14em] text-muted uppercase">Open trips</div>
+          <div className="mt-2 flex flex-wrap gap-1">
+            {cases.map((item) => (
+              <button
+                key={item.id}
+                type="button"
+                onClick={() => dispatch({ type: 'select-case', id: item.id })}
+                className={`rounded-full px-2.5 py-1 text-[11px] font-medium ${
+                  item.id === c.id ? 'bg-ink text-white' : item.gdsFacts?.length ? 'bg-purple-soft text-purple' : 'bg-canvas text-muted'
+                }`}
+              >
+                {item.traveller.split(' ')[0]}
+              </button>
+            ))}
           </div>
-          <div className="min-w-0">
-            <div className="flex flex-wrap items-center gap-1.5">
-              <h1 className="text-base font-medium tracking-tight">{c.traveller}</h1>
-              <PriorityChip value={c.urgency} />
+        </div>
+        <div className="px-4 py-5">
+          <div className="flex items-start gap-3">
+            <div className="grid h-12 w-12 shrink-0 place-items-center rounded-full bg-purple text-sm font-medium text-white">
+              {initials}
             </div>
-            <p className="mt-0.5 text-[12px] text-muted">
-              {c.role}
-              <br />
-              {c.company}
-            </p>
+            <div className="min-w-0">
+              <div className="flex flex-wrap items-center gap-1.5">
+                <h1 className="text-base font-medium tracking-tight">{c.traveller}</h1>
+                <PriorityChip value={c.urgency} />
+              </div>
+              <p className="mt-0.5 text-[12px] text-muted">{c.trip}</p>
+            </div>
           </div>
+          <dl className="mt-4 space-y-2.5 text-[13px]">
+            <RailFact label="PNR" value={c.newPnr ? `${c.pnr} → ${c.newPnr}` : c.pnr} />
+            <RailFact label="Urgency" value={urgencyWord(c.urgency)} />
+            <RailFact label="Owner" value={owner.label} />
+          </dl>
         </div>
-        <div className="mt-3 flex flex-wrap gap-1.5">
-          <span className="chip bg-ink text-white">{WORKFLOW_LABEL[c.workflow]}</span>
-          {c.gdsFacts?.length ? <span className="chip bg-purple-soft text-purple">Ava GDS</span> : null}
-          <span className="chip bg-purple-soft text-purple">{c.intent}</span>
-          {c.resolvedByAva ? <span className="chip bg-teal-soft text-teal">Ava resolved</span> : null}
+        <div className="mx-4 mb-4 rounded-xl border border-line bg-canvas px-3 py-3">
+          <div className="text-[10px] font-medium tracking-[0.14em] text-muted uppercase">Who is working</div>
+          <p className="mt-1 text-[13px] font-medium leading-snug">{owner.headline}</p>
+          <p className="mt-1 text-[12px] leading-snug text-muted">{owner.detail}</p>
         </div>
       </div>
-      <AlertBlock
-        tone="amber"
-        icon={<AlertTriangle size={13} />}
-        title="Policy / meeting"
-        body={c.meetingConstraint}
-      />
-      <AlertBlock tone="purple" icon={<Star size={13} />} title="Loyalty" body={c.loyalty} />
-      <RailSection title="Company policy">{c.policy}</RailSection>
-      <RailSection title="Payment on file">{cardOnFile(c)}</RailSection>
-      <RailSection title="Preferences">{c.preferences.join(' · ')}</RailSection>
-      <RailSection title="Location now">{c.locationNow}</RailSection>
-      <RailSection title="Last traveler action">{lastTravelerAction(c)}</RailSection>
-      <div className="border-t border-line px-4 py-4">
-        <div className="text-[10px] font-medium tracking-[0.14em] text-muted uppercase">Booking history</div>
-        <ul className="mt-2 space-y-2">
-          {bookingHistory(c).map((row) => (
-            <li key={row.title} className="rounded-xl border border-line bg-canvas px-3 py-2">
-              <div className="text-[13px] font-medium">{row.title}</div>
-              <div className="text-[11px] text-muted">{row.meta}</div>
-            </li>
-          ))}
-        </ul>
-      </div>
-      <div className="border-t border-line px-4 py-4 text-[12px] text-muted">
-        <div className="flex items-center gap-2">
-          <Phone size={12} /> {c.phone}
-        </div>
-        <div className="mt-1 flex items-center gap-2">
-          <Mail size={12} /> {c.email}
-        </div>
-        <div className="mt-3">
-          Context {c.contextCompleteness}% · {c.confidence}% confidence
-        </div>
-        <div className="mt-1">
-          PNR {c.pnr}
-          {c.newPnr ? ` → ${c.newPnr}` : ''}
-        </div>
+      <div className="border-t border-line p-4">
+        <button
+          type="button"
+          className="btn btn-primary w-full"
+          onClick={() => {
+            dispatch({ type: 'select-case', id: c.id })
+            navigate('/context')
+          }}
+        >
+          <Layers size={14} /> Open shared context
+        </button>
+        <p className="mt-2 text-[11px] text-muted">Policy, flights, and supplier status live there — not on this rail.</p>
       </div>
     </aside>
   )
 }
 
-function AlertBlock({
-  tone,
-  icon,
-  title,
-  body,
-}: {
-  tone: 'amber' | 'purple'
-  icon: ReactNode
-  title: string
-  body: string
-}) {
-  const cls = tone === 'amber' ? 'bg-amber-soft text-amber' : 'bg-purple-soft text-purple'
+function RailFact({ label, value }: { label: string; value: string }) {
   return (
-    <div className={`mx-4 mb-3 rounded-xl px-3 py-2.5 ${cls}`}>
-      <div className="flex items-center gap-1.5 text-[10px] font-medium tracking-[0.12em] uppercase">
-        {icon}
-        {title}
-      </div>
-      <p className="mt-1 text-[12px] text-ink">{body}</p>
+    <div className="flex items-baseline justify-between gap-3">
+      <dt className="text-[10px] font-medium tracking-[0.12em] text-muted uppercase">{label}</dt>
+      <dd className="text-right font-medium">{value}</dd>
     </div>
   )
 }
 
-function RailSection({ title, children }: { title: string; children: ReactNode }) {
-  return (
-    <div className="border-t border-line px-4 py-3">
-      <div className="text-[10px] font-medium tracking-[0.14em] text-muted uppercase">{title}</div>
-      <p className="mt-1 text-[13px] leading-snug">{children}</p>
-    </div>
-  )
+function deskOwner(c: ServiceCase) {
+  if (c.workflow === 'specialist') {
+    return {
+      label: 'Specialist',
+      headline: 'Copilot routed this out of travel.',
+      detail: 'Ava will not answer. A documents specialist owns it.',
+    }
+  }
+  if (c.gdsFacts?.length) {
+    return {
+      label: 'Ava',
+      headline: 'Ava tickets this. You do not type GDS.',
+      detail: 'Copilot already checked waiver and seats. Let Ava ticket from the centre.',
+    }
+  }
+  if (c.workflow === 'ava_contained' || c.workflow === 'servicing') {
+    return {
+      label: 'Ava',
+      headline: 'Ava owns the traveller.',
+      detail: 'Copilot already confirmed this is in policy. Do not take the chat.',
+    }
+  }
+  if (c.workflow === 'triage') {
+    return {
+      label: 'You',
+      headline: c.inventoryFresh ? 'Copilot refreshed seats. Ava can ticket.' : 'Copilot is holding ticketing.',
+      detail: c.inventoryFresh
+        ? 'Hand this back from the centre. You do not type GDS.'
+        : 'Ava cannot ticket until inventory is fresh.',
+    }
+  }
+  return {
+    label: 'You',
+    headline: 'Copilot is helping you. You attest.',
+    detail: 'Ava tickets after you confirm. You do not type GDS.',
+  }
+}
+
+function urgencyWord(value: ServiceCase['urgency']) {
+  return value.charAt(0).toUpperCase() + value.slice(1)
 }
 
 function LastActionStrip({ c }: { c: ServiceCase }) {
@@ -240,6 +229,9 @@ function LastActionStrip({ c }: { c: ServiceCase }) {
 }
 
 function TripChrome({ c, tab, onTab }: { c: ServiceCase; tab: TripTab; onTab: (t: TripTab) => void }) {
+  const { dispatch } = useDemo()
+  const navigate = useNavigate()
+  const owner = deskOwner(c)
   const initials = c.traveller
     .split(' ')
     .map((p) => p[0])
@@ -251,11 +243,24 @@ function TripChrome({ c, tab, onTab }: { c: ServiceCase; tab: TripTab; onTab: (t
         <div className="min-w-0 flex-1">
           <div className="text-sm font-medium">{c.traveller}</div>
           <div className="truncate text-[12px] text-muted">
-            {c.company} · {c.policy} · PNR {c.pnr}
+            {c.trip} · PNR {c.pnr} · {owner.label}
           </div>
         </div>
         <PriorityChip value={c.urgency} />
+        <button
+          type="button"
+          className="btn btn-ghost text-xs"
+          onClick={() => {
+            dispatch({ type: 'select-case', id: c.id })
+            navigate('/context')
+          }}
+        >
+          <Layers size={13} /> Open shared context
+        </button>
       </div>
+      <p className="mt-2 text-[12px] text-muted xl:hidden">
+        {owner.headline} {owner.detail}
+      </p>
       <div className="flex flex-wrap items-end justify-between gap-3 xl:pt-0">
         <div className="hidden xl:block">
           <div className="text-[11px] font-medium tracking-[0.12em] text-muted uppercase">Trip visualization</div>
@@ -1062,17 +1067,6 @@ function lastTravelerAction(c: ServiceCase) {
     return `Requested a VAT invoice from ${channelLabel[c.channel]}. No itinerary change.`
   }
   return `Raised a document question on ${channelLabel[c.channel]}. Last booking action did not include visa checks.`
-}
-
-function cardOnFile(c: ServiceCase) {
-  return `${c.company.split(' ')[0]} virtual card · Visa ••${c.caseNumber.replace(/\D/g, '').slice(-4) || '1842'}`
-}
-
-function bookingHistory(c: ServiceCase) {
-  return [
-    { title: c.trip, meta: `PNR ${c.pnr} · Active${c.workflow === 'rebook' || c.workflow === 'triage' ? ' · disrupted' : ''}` },
-    { title: 'SFO → LHR · 12–16 Jun 2026', meta: 'Completed · same policy' },
-  ]
 }
 
 function airlineCode(airline: string) {

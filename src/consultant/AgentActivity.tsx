@@ -15,6 +15,7 @@ import {
   assignmentsFor,
   HELPERS,
   helperDef,
+  helperOwnerLabel,
   liveStatus,
   statusLabel,
   type HelperId,
@@ -63,7 +64,7 @@ export function AgentWorkStrip({
       onClick={onOpen}
       className="flex w-full flex-wrap items-center gap-2 border-b border-line bg-white px-4 py-2.5 text-left md:px-5"
     >
-      <span className="text-[11px] font-medium tracking-[0.12em] text-muted uppercase">Agents on this trip</span>
+      <span className="text-[11px] font-medium tracking-[0.12em] text-muted uppercase">Copilot on this trip</span>
       {shown.map((row) => {
         const Icon = ICONS[row.helperId]
         return (
@@ -88,7 +89,7 @@ export function InboxAgentStrip({ c, onOpen }: { c: ServiceCase; onOpen: () => v
       <div className="flex items-center justify-between border-b border-line px-4 py-3">
         <div>
           <div className="text-[11px] font-medium tracking-[0.12em] text-muted uppercase">Who is working this</div>
-          <div className="text-sm font-medium">AI agents do the booking work. You only confirm when needed.</div>
+          <div className="text-sm font-medium">Copilot does the booking work. Ava tickets when it is safe.</div>
         </div>
         <button type="button" className="btn btn-ghost text-xs" onClick={onOpen}>
           Open Agents
@@ -131,9 +132,9 @@ export function HelperBoard({
   const work = assignmentsFor(c)
   return (
     <section className="card p-4">
-        <h2 className="text-sm font-semibold">AI agents that do the booking work</h2>
+        <h2 className="text-sm font-semibold">Copilot on the desk</h2>
         <p className="mt-1 text-[13px] text-muted">
-          Click one to see what it is doing. You only confirm when a person is needed.
+          TravelXen helpers propose. You attest when a person is needed. Ava tickets when it is safe.
         </p>
       <div className="mt-3 grid gap-2 md:grid-cols-2">
         {HELPERS.map((h) => {
@@ -166,7 +167,7 @@ export function HelperBoard({
                   ) : (
                     <p className="mt-1 text-[12px] text-muted">{h.speeds}</p>
                   )}
-                  <div className="mt-2 text-[10px] font-medium tracking-[0.12em] text-muted uppercase">{h.owner}</div>
+                  <div className="mt-2 text-[10px] font-medium tracking-[0.12em] text-purple uppercase">{helperOwnerLabel()}</div>
                 </div>
               </div>
             </button>
